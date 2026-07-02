@@ -1,0 +1,38 @@
+name: daily-update
+
+on:
+  schedule:
+    # 07:17 UTC,北美当日所有比赛(最晚约 06:00 UTC 结束)均已完赛
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Refresh results and Elo
+        run: python update.py
+
+      - name: Rebuild predictions
+        run: python simulate.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No new results, nothing to commit."
+          else
+            git commit -m "Data update $(date -u +%F)"
+            git push
+          fi

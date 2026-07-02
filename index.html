@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2026 世界杯淘汰赛量化预测</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --accent: #3fb950;
+    --accent2: #58a6ff; --gold: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    line-height: 1.6; padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  h2 { font-size: 1.15rem; margin: 36px 0 12px; color: var(--accent2); }
+  .sub { color: var(--dim); font-size: .85rem; margin-bottom: 8px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin-bottom: 10px;
+  }
+  /* 冠军概率条 */
+  .champ-row { display: flex; align-items: center; gap: 10px; margin: 7px 0; }
+  .champ-name { width: 5.5em; text-align: right; font-size: .95rem; flex-shrink: 0; }
+  .champ-bar-track { flex: 1; background: #21262d; border-radius: 4px; height: 20px; overflow: hidden; }
+  .champ-bar { height: 100%; background: linear-gradient(90deg, #1f6feb, #3fb950); border-radius: 4px; }
+  .champ-pct { width: 4.2em; font-variant-numeric: tabular-nums; font-size: .9rem; flex-shrink: 0; }
+  /* 路径 */
+  .round-title { font-weight: 600; color: var(--gold); margin: 18px 0 6px; font-size: 1rem; }
+  .match {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: .95rem;
+  }
+  .match:last-child { border-bottom: none; }
+  .match .meta { color: var(--dim); font-size: .8rem; width: 8.5em; flex-shrink: 0; }
+  .match .teams { min-width: 13em; }
+  .match .score { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .match .win { color: var(--accent); }
+  .match .prob { color: var(--dim); font-size: .82rem; }
+  .match.played { opacity: .55; }
+  .match.played .score { color: var(--text); }
+  .badge {
+    display: inline-block; font-size: .7rem; padding: 0 6px; border-radius: 8px;
+    border: 1px solid var(--border); color: var(--dim); vertical-align: 1px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border);
+           font-variant-numeric: tabular-nums; }
+  th { color: var(--dim); font-weight: 500; font-size: .8rem; }
+  td.num, th.num { text-align: right; }
+  .fine { color: var(--dim); font-size: .82rem; }
+  .method p { margin: 8px 0; font-size: .9rem; color: #c9d1d9; }
+  a { color: var(--accent2); text-decoration: none; }
+  .disclaimer {
+    margin-top: 28px; padding: 12px 16px; border: 1px dashed var(--border);
+    border-radius: 10px; color: var(--dim); font-size: .82rem;
+  }
+  @media (max-width: 560px) { .match .meta { width: 100%; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>2026 世界杯淘汰赛量化预测</h1>
+  <div class="sub" id="subline"></div>
+
+  <h2>夺冠概率</h2>
+  <div class="card" id="champ"></div>
+
+  <h2>推演:最可能的完整赛果</h2>
+  <div class="sub">已赛场次为真实结果(灰显);未赛场次取模型最可能比分与晋级方,逐轮推进。</div>
+  <div class="card" id="path"></div>
+
+  <h2>剩余场次逐场概率</h2>
+  <div class="card" style="overflow-x:auto"><table id="detail"></table></div>
+
+  <h2>最可能的决赛组合</h2>
+  <div class="card"><table id="pairs"></table></div>
+
+  <h2>方法</h2>
+  <div class="card method" id="method"></div>
+
+  <div class="disclaimer">
+    本页由模型自动生成,仅供娱乐与方法演示。预测不构成任何形式的保证,
+    也不建议据此参与任何博彩活动。足球是圆的,这正是它好看的原因。
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const T = code => DATA.teams[code];
+const pct = (p, d=1) => (p*100).toFixed(d) + "%";
+
+document.getElementById("subline").textContent =
+  `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 每日自动更新`;
+
+/* 夺冠概率 */
+{
+  const el = document.getElementById("champ");
+  const rows = DATA.champTable.filter(r => r.pC >= 0.001).slice(0, 14);
+  const max = rows[0].pC;
+  el.innerHTML = rows.map(r => `
+    <div class="champ-row">
+      <div class="champ-name">${r.zh}</div>
+      <div class="champ-bar-track"><div class="champ-bar" style="width:${(r.pC/max*100).toFixed(1)}%"></div></div>
+      <div class="champ-pct">${pct(r.pC)}</div>
+    </div>`).join("");
+}
+
+/* 最可能路径 */
+{
+  const el = document.getElementById("path");
+  const order = ["R32", "R16", "QF", "SF", "TP", "F"];
+  const zh = {R32:"32 强", R16:"16 强", QF:"八强", SF:"半决赛", TP:"季军赛", F:"决赛"};
+  let html = "";
+  for (const rd of order) {
+    const ms = DATA.modalPath.filter(m => m.round === rd);
+    if (!ms.length) continue;
+    html += `<div class="round-title">${zh[rd]}</div>`;
+    for (const m of ms) {
+      const wA = m.winner === m.a;
+      html += `<div class="match${m.played ? " played" : ""}">
+        <span class="meta">${m.date} · ${m.city}</span>
+        <span class="teams">
+          <span class="${wA ? "win" : ""}">${T(m.a).zh}</span>
+          <span class="score"> ${m.score} </span>
+          <span class="${!wA ? "win" : ""}">${T(m.b).zh}</span>
+          ${m.note ? `<span class="badge">${m.note}</span>` : ""}
+        </span>
+        ${m.played
+          ? `<span class="prob">已赛</span>`
+          : `<span class="prob">${T(m.winner).zh}晋级 ${pct(m.pAdvance,0)} · 该比分概率 ${pct(m.scoreP)}</span>`}
+      </div>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+/* 逐场概率表 */
+{
+  const el = document.getElementById("detail");
+  const rows = DATA.modalPath.filter(m => !m.played);
+  el.innerHTML = `<tr><th>轮次</th><th>对阵 (Elo 含主场分)</th>
+      <th class="num">90 分钟胜/平/负</th><th class="num">晋级概率</th><th>最可能比分 (前三)</th></tr>` +
+    rows.map(m => `<tr>
+      <td>${m.roundZh}<div class="fine">${m.date}</div></td>
+      <td>${T(m.a).zh} (${m.eloA}) vs ${T(m.b).zh} (${m.eloB})</td>
+      <td class="num">${pct(m.pWin90,0)} / ${pct(m.pDraw90,0)} / ${pct(m.pLoss90,0)}</td>
+      <td class="num"><b>${T(m.winner).zh} ${pct(m.pAdvance)}</b></td>
+      <td>${m.topScores.slice(0,3).map(s => `${s.s} (${pct(s.p)})`).join("、")}</td>
+    </tr>`).join("");
+}
+
+/* 决赛组合 */
+{
+  const el = document.getElementById("pairs");
+  el.innerHTML = `<tr><th>组合</th><th class="num">概率</th></tr>` +
+    DATA.finalPairs.map(r =>
+      `<tr><td>${r.zh}</td><td class="num">${pct(r.p)}</td></tr>`).join("");
+}
+
+/* 方法 */
+document.getElementById("method").innerHTML = `
+  <p><b>输入。</b>模型只有两类输入:各队在 eloratings.net 的 World Football Elo Ratings,
+  以及截至数据日期的真实赛果与对阵表。不使用任何媒体预测、伤停消息或人工调整。</p>
+  <p><b>单场模型。</b>由 Elo 差 d 得胜负期望 We = 1/(1+10<sup>−d/400</sup>),
+  在本国境内比赛的球队加 ${DATA.params.homeBonus} Elo 主场分。固定 90 分钟两队合计进球期望为
+  ${DATA.params.totalGoals},用二分法解出双方进球率 λ₁、λ₂,使双泊松比分分布给出的期望积分
+  恰好等于 We。比分分布因此与 Elo 完全自洽,没有额外的自由参数。</p>
+  <p><b>淘汰赛推进。</b>90 分钟战平进入加时(进球率取常规时间的三分之一),
+  仍平则点球按五五开处理。从当前真实对阵出发,对剩余赛程做 ${DATA.nSims.toLocaleString()}
+  次 Monte Carlo 模拟,统计各队晋级与夺冠概率;单场比分分布为解析计算。</p>
+  <p><b>更新。</b>GitHub Actions 每日抓取最新赛果与 Elo,有新比赛完赛才会重算并发布,
+  代码见 <a href="https://github.com/yingwang/worldcup-predictions">仓库</a>。</p>
+  <p><b>已知局限。</b>模型不含阵容、伤停、红牌停赛与天气;点球五五开是有意的保守选择;
+  主场分只按国境判断,不衡量实际球迷构成。这些都是噪声来源,也是足球的一部分。</p>`;
+</script>
+</body>
+</html>
