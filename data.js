@@ -5,162 +5,194 @@ const DATA = {
   "AR": {
    "zh": "阿根廷",
    "en": "Argentina",
-   "elo": 2148
+   "elo": 2148,
+   "flag": "🇦🇷"
   },
   "ES": {
    "zh": "西班牙",
    "en": "Spain",
-   "elo": 2144
+   "elo": 2144,
+   "flag": "🇪🇸"
   },
   "FR": {
    "zh": "法国",
    "en": "France",
-   "elo": 2134
+   "elo": 2134,
+   "flag": "🇫🇷"
   },
   "EN": {
    "zh": "英格兰",
    "en": "England",
-   "elo": 2046
+   "elo": 2046,
+   "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
   },
   "BR": {
    "zh": "巴西",
    "en": "Brazil",
-   "elo": 2031
+   "elo": 2031,
+   "flag": "🇧🇷"
   },
   "CO": {
    "zh": "哥伦比亚",
    "en": "Colombia",
-   "elo": 2004
+   "elo": 2004,
+   "flag": "🇨🇴"
   },
   "PT": {
    "zh": "葡萄牙",
    "en": "Portugal",
-   "elo": 1990
+   "elo": 1990,
+   "flag": "🇵🇹"
   },
   "MX": {
    "zh": "墨西哥",
    "en": "Mexico",
-   "elo": 1943
+   "elo": 1943,
+   "flag": "🇲🇽"
   },
   "NO": {
    "zh": "挪威",
    "en": "Norway",
-   "elo": 1934
+   "elo": 1934,
+   "flag": "🇳🇴"
   },
   "CH": {
    "zh": "瑞士",
    "en": "Switzerland",
-   "elo": 1914
+   "elo": 1914,
+   "flag": "🇨🇭"
   },
   "BE": {
    "zh": "比利时",
    "en": "Belgium",
-   "elo": 1910
+   "elo": 1910,
+   "flag": "🇧🇪"
   },
   "HR": {
    "zh": "克罗地亚",
    "en": "Croatia",
-   "elo": 1905
+   "elo": 1905,
+   "flag": "🇭🇷"
   },
   "MA": {
    "zh": "摩洛哥",
    "en": "Morocco",
-   "elo": 1886
+   "elo": 1886,
+   "flag": "🇲🇦"
   },
   "AT": {
    "zh": "奥地利",
    "en": "Austria",
-   "elo": 1836
+   "elo": 1836,
+   "flag": "🇦🇹"
   },
   "PY": {
    "zh": "巴拉圭",
    "en": "Paraguay",
-   "elo": 1823
+   "elo": 1823,
+   "flag": "🇵🇾"
   },
   "AU": {
    "zh": "澳大利亚",
    "en": "Australia",
-   "elo": 1800
+   "elo": 1800,
+   "flag": "🇦🇺"
   },
   "US": {
    "zh": "美国",
    "en": "United States",
-   "elo": 1798
+   "elo": 1798,
+   "flag": "🇺🇸"
   },
   "DZ": {
    "zh": "阿尔及利亚",
    "en": "Algeria",
-   "elo": 1785
+   "elo": 1785,
+   "flag": "🇩🇿"
   },
   "CA": {
    "zh": "加拿大",
    "en": "Canada",
-   "elo": 1764
+   "elo": 1764,
+   "flag": "🇨🇦"
   },
   "EG": {
    "zh": "埃及",
    "en": "Egypt",
-   "elo": 1742
+   "elo": 1742,
+   "flag": "🇪🇬"
   },
   "CV": {
    "zh": "佛得角",
    "en": "Cape Verde",
-   "elo": 1622
+   "elo": 1622,
+   "flag": "🇨🇻"
   },
   "GH": {
    "zh": "加纳",
    "en": "Ghana",
-   "elo": 1575
+   "elo": 1575,
+   "flag": "🇬🇭"
   },
   "NL": {
    "zh": "荷兰",
    "en": "Netherlands",
-   "elo": 1971
+   "elo": 1971,
+   "flag": "🇳🇱"
   },
   "DE": {
    "zh": "德国",
    "en": "Germany",
-   "elo": 1908
+   "elo": 1908,
+   "flag": "🇩🇪"
   },
   "JP": {
    "zh": "日本",
    "en": "Japan",
-   "elo": 1888
+   "elo": 1888,
+   "flag": "🇯🇵"
   },
   "EC": {
    "zh": "厄瓜多尔",
    "en": "Ecuador",
-   "elo": 1871
+   "elo": 1871,
+   "flag": "🇪🇨"
   },
   "SN": {
    "zh": "塞内加尔",
    "en": "Senegal",
-   "elo": 1816
+   "elo": 1816,
+   "flag": "🇸🇳"
   },
   "SE": {
    "zh": "瑞典",
    "en": "Sweden",
-   "elo": 1731
+   "elo": 1731,
+   "flag": "🇸🇪"
   },
   "CI": {
    "zh": "科特迪瓦",
    "en": "Ivory Coast",
-   "elo": 1727
+   "elo": 1727,
+   "flag": "🇨🇮"
   },
   "CD": {
    "zh": "刚果民主共和国",
    "en": "DR Congo",
-   "elo": 1704
+   "elo": 1704,
+   "flag": "🇨🇩"
   },
   "BA": {
    "zh": "波黑",
    "en": "Bosnia and Herzegovina",
-   "elo": 1605
+   "elo": 1605,
+   "flag": "🇧🇦"
   },
   "ZA": {
    "zh": "南非",
    "en": "South Africa",
-   "elo": 1559
+   "elo": 1559,
+   "flag": "🇿🇦"
   }
  },
  "modalPath": [

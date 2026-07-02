@@ -18,16 +18,23 @@
     line-height: 1.6; padding: 24px 16px 64px;
   }
   .wrap { max-width: 860px; margin: 0 auto; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
   h1 { font-size: 1.5rem; margin-bottom: 4px; }
   h2 { font-size: 1.15rem; margin: 36px 0 12px; color: var(--accent2); }
   .sub { color: var(--dim); font-size: .85rem; margin-bottom: 8px; }
+  .lang-toggle { display: flex; gap: 6px; flex-shrink: 0; margin-top: 2px; }
+  .lang-toggle button {
+    background: #21262d; color: var(--text); border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 10px; cursor: pointer; font-size: .8rem;
+  }
+  .lang-toggle button.active { border-color: var(--accent2); color: #fff; background: #1f6feb; }
   .card {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 16px; margin-bottom: 10px;
   }
   /* 冠军概率条 */
   .champ-row { display: flex; align-items: center; gap: 10px; margin: 7px 0; }
-  .champ-name { width: 5.5em; text-align: right; font-size: .95rem; flex-shrink: 0; }
+  .champ-name { width: clamp(5.5em, 28vw, 12em); text-align: right; font-size: .95rem; flex-shrink: 0; }
   .champ-bar-track { flex: 1; background: #21262d; border-radius: 4px; height: 20px; overflow: hidden; }
   .champ-bar { height: 100%; background: linear-gradient(90deg, #1f6feb, #3fb950); border-radius: 4px; }
   .champ-pct { width: 4.2em; font-variant-numeric: tabular-nums; font-size: .9rem; flex-shrink: 0; }
@@ -43,6 +50,7 @@
   .match .score { font-weight: 700; font-variant-numeric: tabular-nums; }
   .match .win { color: var(--accent); }
   .match .prob { color: var(--dim); font-size: .82rem; }
+  .team-flag { margin-right: 3px; }
   .match.played { opacity: .55; }
   .match.played .score { color: var(--text); }
   .badge {
@@ -61,31 +69,43 @@
     margin-top: 28px; padding: 12px 16px; border: 1px dashed var(--border);
     border-radius: 10px; color: var(--dim); font-size: .82rem;
   }
-  @media (max-width: 560px) { .match .meta { width: 100%; } }
+  @media (max-width: 560px) {
+    .topbar { display: block; }
+    .lang-toggle { margin: 10px 0 0; }
+    .match .meta { width: 100%; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>2026 世界杯淘汰赛量化预测</h1>
-  <div class="sub" id="subline"></div>
+  <div class="topbar">
+    <div>
+      <h1 id="title">2026 世界杯淘汰赛量化预测</h1>
+      <div class="sub" id="subline"></div>
+    </div>
+    <div class="lang-toggle" aria-label="Language">
+      <button id="lang-zh" type="button">中文 🇨🇳</button>
+      <button id="lang-en" type="button">English 🇬🇧</button>
+    </div>
+  </div>
 
-  <h2>夺冠概率</h2>
+  <h2 id="champ-title">夺冠概率</h2>
   <div class="card" id="champ"></div>
 
-  <h2>推演:最可能的完整赛果</h2>
-  <div class="sub">已赛场次为真实结果(灰显);未赛场次取模型最可能比分与晋级方,逐轮推进。</div>
+  <h2 id="path-title">推演:90 分钟最可能比分与晋级方</h2>
+  <div class="sub" id="path-sub">已赛场次为真实结果(灰显);未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。</div>
   <div class="card" id="path"></div>
 
-  <h2>剩余场次逐场概率</h2>
+  <h2 id="detail-title">剩余场次逐场概率</h2>
   <div class="card" style="overflow-x:auto"><table id="detail"></table></div>
 
-  <h2>最可能的决赛组合</h2>
+  <h2 id="pairs-title">最可能的决赛组合</h2>
   <div class="card"><table id="pairs"></table></div>
 
-  <h2>方法</h2>
+  <h2 id="method-title">方法</h2>
   <div class="card method" id="method"></div>
 
-  <div class="disclaimer">
+  <div class="disclaimer" id="disclaimer">
     本页由模型自动生成,仅供娱乐与方法演示。预测不构成任何形式的保证,
     也不建议据此参与任何博彩活动。足球是圆的,这正是它好看的原因。
   </div>
@@ -95,90 +115,210 @@
 <script>
 const T = code => DATA.teams[code];
 const pct = (p, d=1) => (p*100).toFixed(d) + "%";
+const texts = {
+  zh: {
+    title: "2026 世界杯淘汰赛量化预测",
+    pageTitle: "2026 世界杯淘汰赛量化预测",
+    subline: () => `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 每日自动更新`,
+    champTitle: "夺冠概率",
+    pathTitle: "推演:90 分钟最可能比分与晋级方",
+    pathSub: "已赛场次为真实结果(灰显);未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。",
+    detailTitle: "剩余场次逐场概率",
+    pairsTitle: "最可能的决赛组合",
+    methodTitle: "方法",
+    played: "已赛",
+    advance: "晋级",
+    scoreProb: "90 分钟该比分概率",
+    rounds: {R32:"32 强", R16:"16 强", QF:"八强", SF:"半决赛", TP:"季军赛", F:"决赛"},
+    table: {
+      round: "轮次",
+      matchup: "对阵 (Elo 含主场分)",
+      wdl: "90 分钟胜/平/负",
+      adv: "晋级概率",
+      scores: "90 分钟最可能比分 (前三)",
+      pair: "组合",
+      probability: "概率",
+    },
+    note(note) {
+      if (!note) return "";
+      return note;
+    },
+    method: () => `
+      <p><b>输入。</b>模型只有两类输入:各队在 eloratings.net 的 World Football Elo Ratings,
+      以及截至数据日期的真实赛果与对阵表。不使用任何媒体预测、伤停消息或人工调整。</p>
+      <p><b>单场模型。</b>由 Elo 差 d 得胜负期望 We = 1/(1+10<sup>−d/400</sup>),
+      在本国境内比赛的球队加 ${DATA.params.homeBonus} Elo 主场分。固定 90 分钟两队合计进球期望为
+      ${DATA.params.totalGoals},用二分法解出双方进球率 λ₁、λ₂,使双泊松比分分布给出的期望积分
+      恰好等于 We。比分分布因此与 Elo 完全自洽,没有额外的自由参数。</p>
+      <p><b>淘汰赛推进。</b>90 分钟战平进入加时(进球率取常规时间的三分之一),
+      仍平则点球按五五开处理。从当前真实对阵出发,对剩余赛程做 ${DATA.nSims.toLocaleString()}
+      次 Monte Carlo 模拟,统计各队晋级与夺冠概率;单场比分分布为解析计算。</p>
+      <p><b>更新。</b>GitHub Actions 每日抓取最新赛果与 Elo,有新比赛完赛才会重算并发布,
+      代码见 <a href="https://github.com/yingwang/worldcup-predictions">仓库</a>。</p>
+      <p><b>已知局限。</b>模型不含阵容、伤停、红牌停赛与天气;点球五五开是有意的保守选择;
+      主场分只按国境判断,不衡量实际球迷构成。这些都是噪声来源,也是足球的一部分。</p>`,
+    disclaimer: "本页由模型自动生成,仅供娱乐与方法演示。预测不构成任何形式的保证,也不建议据此参与任何博彩活动。足球是圆的,这正是它好看的原因。",
+  },
+  en: {
+    title: "2026 World Cup Knockout Predictions",
+    pageTitle: "2026 World Cup Knockout Predictions",
+    subline: () => `Data as of ${DATA.dataDate} · Elo from eloratings.net · ${DATA.nSims.toLocaleString()} Monte Carlo simulations · daily auto-update`,
+    champTitle: "Title probabilities",
+    pathTitle: "Projection: most likely 90-minute score and advancer",
+    pathSub: "Played matches use real results and are dimmed; future matches use the model's most likely 90-minute score and advancer, then roll forward round by round.",
+    detailTitle: "Match-by-match probabilities",
+    pairsTitle: "Most likely final pairings",
+    methodTitle: "Method",
+    played: "played",
+    advance: "advance",
+    scoreProb: "90-minute score probability",
+    rounds: {R32:"Round of 32", R16:"Round of 16", QF:"Quarterfinals", SF:"Semifinals", TP:"Third-place match", F:"Final"},
+    table: {
+      round: "Round",
+      matchup: "Matchup (Elo incl. home bonus)",
+      wdl: "90-min W/D/L",
+      adv: "Advance probability",
+      scores: "Most likely 90-min scores (top 3)",
+      pair: "Pairing",
+      probability: "Probability",
+    },
+    note(note) {
+      if (!note) return "";
+      if (note === "加时") return "AET";
+      if (note === "加时/点球") return "AET/pens";
+      if (note.startsWith("点球 ")) return `pens ${note.slice(3)}`;
+      return note;
+    },
+    method: () => `
+      <p><b>Inputs.</b>The model uses only two inputs: each team's World Football Elo Rating
+      from eloratings.net, and the real results plus bracket state as of the data date. It uses no
+      media forecasts, injury news, lineup assumptions, or manual adjustments.</p>
+      <p><b>Single-match model.</b>An Elo difference d gives win expectancy
+      We = 1/(1+10<sup>−d/400</sup>). A team playing inside its own country receives a
+      ${DATA.params.homeBonus}-point Elo home bonus. The model fixes total expected 90-minute goals at
+      ${DATA.params.totalGoals}, then solves λ₁ and λ₂ by bisection so the double-Poisson score grid has
+      the same expected result as Elo. The score distribution is therefore tied directly to Elo and has
+      no extra fitted strength parameter.</p>
+      <p><b>Knockout progression.</b>A 90-minute draw goes to extra time, with extra-time scoring rates set
+      to one third of normal time. If still level, penalties are treated as 50/50. Starting from the
+      current real bracket, the site runs ${DATA.nSims.toLocaleString()} Monte Carlo simulations of the
+      remaining tournament and reports advancement and title probabilities. Individual score grids are
+      computed analytically, not sampled.</p>
+      <p><b>Updates.</b>GitHub Actions fetches new results and Elo ratings daily. When completed matches
+      change the state, predictions are rebuilt and published. Code:
+      <a href="https://github.com/yingwang/worldcup-predictions">repository</a>.</p>
+      <p><b>Known limits.</b>The model does not include squads, injuries, suspensions, weather, or tactical
+      matchups. Penalties are deliberately conservative at 50/50. Home bonus is based only on host country,
+      not actual crowd composition.</p>`,
+    disclaimer: "This page is generated by an automated model for entertainment and method demonstration only. It is not a guarantee and should not be used for betting. Football remains uncertain; that is part of the point.",
+  }
+};
 
-document.getElementById("subline").textContent =
-  `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 每日自动更新`;
+const savedLang = localStorage.getItem("lang");
+let lang = (savedLang === "zh" || savedLang === "en")
+  ? savedLang
+  : ((navigator.language || "").toLowerCase().startsWith("en") ? "en" : "zh");
 
-/* 夺冠概率 */
-{
+function teamName(code) {
+  const t = T(code);
+  const name = lang === "en" ? t.en : t.zh;
+  return `<span class="team-flag">${t.flag || ""}</span>${name}`;
+}
+
+function renderChamp() {
   const el = document.getElementById("champ");
   const rows = DATA.champTable.filter(r => r.pC >= 0.001).slice(0, 14);
   const max = rows[0].pC;
   el.innerHTML = rows.map(r => `
     <div class="champ-row">
-      <div class="champ-name">${r.zh}</div>
+      <div class="champ-name">${teamName(r.code)}</div>
       <div class="champ-bar-track"><div class="champ-bar" style="width:${(r.pC/max*100).toFixed(1)}%"></div></div>
       <div class="champ-pct">${pct(r.pC)}</div>
     </div>`).join("");
 }
 
-/* 最可能路径 */
-{
+function renderPath() {
+  const tx = texts[lang];
   const el = document.getElementById("path");
   const order = ["R32", "R16", "QF", "SF", "TP", "F"];
-  const zh = {R32:"32 强", R16:"16 强", QF:"八强", SF:"半决赛", TP:"季军赛", F:"决赛"};
   let html = "";
   for (const rd of order) {
     const ms = DATA.modalPath.filter(m => m.round === rd);
     if (!ms.length) continue;
-    html += `<div class="round-title">${zh[rd]}</div>`;
+    html += `<div class="round-title">${tx.rounds[rd]}</div>`;
     for (const m of ms) {
       const wA = m.winner === m.a;
       html += `<div class="match${m.played ? " played" : ""}">
         <span class="meta">${m.date} · ${m.city}</span>
         <span class="teams">
-          <span class="${wA ? "win" : ""}">${T(m.a).zh}</span>
+          <span class="${wA ? "win" : ""}">${teamName(m.a)}</span>
           <span class="score"> ${m.score} </span>
-          <span class="${!wA ? "win" : ""}">${T(m.b).zh}</span>
-          ${m.note ? `<span class="badge">${m.note}</span>` : ""}
+          <span class="${!wA ? "win" : ""}">${teamName(m.b)}</span>
+          ${m.note ? `<span class="badge">${tx.note(m.note)}</span>` : ""}
         </span>
         ${m.played
-          ? `<span class="prob">已赛</span>`
-          : `<span class="prob">${T(m.winner).zh}晋级 ${pct(m.pAdvance,0)} · 该比分概率 ${pct(m.scoreP)}</span>`}
+          ? `<span class="prob">${tx.played}</span>`
+          : `<span class="prob">${teamName(m.winner)} ${tx.advance} ${pct(m.pAdvance,0)} · ${tx.scoreProb} ${pct(m.scoreP)}</span>`}
       </div>`;
     }
   }
   el.innerHTML = html;
 }
 
-/* 逐场概率表 */
-{
+function renderDetail() {
+  const tx = texts[lang];
   const el = document.getElementById("detail");
   const rows = DATA.modalPath.filter(m => !m.played);
-  el.innerHTML = `<tr><th>轮次</th><th>对阵 (Elo 含主场分)</th>
-      <th class="num">90 分钟胜/平/负</th><th class="num">晋级概率</th><th>最可能比分 (前三)</th></tr>` +
+  el.innerHTML = `<tr><th>${tx.table.round}</th><th>${tx.table.matchup}</th>
+      <th class="num">${tx.table.wdl}</th><th class="num">${tx.table.adv}</th><th>${tx.table.scores}</th></tr>` +
     rows.map(m => `<tr>
-      <td>${m.roundZh}<div class="fine">${m.date}</div></td>
-      <td>${T(m.a).zh} (${m.eloA}) vs ${T(m.b).zh} (${m.eloB})</td>
+      <td>${tx.rounds[m.round]}<div class="fine">${m.date}</div></td>
+      <td>${teamName(m.a)} (${m.eloA}) vs ${teamName(m.b)} (${m.eloB})</td>
       <td class="num">${pct(m.pWin90,0)} / ${pct(m.pDraw90,0)} / ${pct(m.pLoss90,0)}</td>
-      <td class="num"><b>${T(m.winner).zh} ${pct(m.pAdvance)}</b></td>
-      <td>${m.topScores.slice(0,3).map(s => `${s.s} (${pct(s.p)})`).join("、")}</td>
+      <td class="num"><b>${teamName(m.winner)} ${pct(m.pAdvance)}</b></td>
+      <td>${m.topScores.slice(0,3).map(s => `${s.s} (${pct(s.p)})`).join(lang === "en" ? ", " : "、")}</td>
     </tr>`).join("");
 }
 
-/* 决赛组合 */
-{
+function renderPairs() {
+  const tx = texts[lang];
   const el = document.getElementById("pairs");
-  el.innerHTML = `<tr><th>组合</th><th class="num">概率</th></tr>` +
+  el.innerHTML = `<tr><th>${tx.table.pair}</th><th class="num">${tx.table.probability}</th></tr>` +
     DATA.finalPairs.map(r =>
-      `<tr><td>${r.zh}</td><td class="num">${pct(r.p)}</td></tr>`).join("");
+      `<tr><td>${teamName(r.pair[0])} vs ${teamName(r.pair[1])}</td><td class="num">${pct(r.p)}</td></tr>`).join("");
 }
 
-/* 方法 */
-document.getElementById("method").innerHTML = `
-  <p><b>输入。</b>模型只有两类输入:各队在 eloratings.net 的 World Football Elo Ratings,
-  以及截至数据日期的真实赛果与对阵表。不使用任何媒体预测、伤停消息或人工调整。</p>
-  <p><b>单场模型。</b>由 Elo 差 d 得胜负期望 We = 1/(1+10<sup>−d/400</sup>),
-  在本国境内比赛的球队加 ${DATA.params.homeBonus} Elo 主场分。固定 90 分钟两队合计进球期望为
-  ${DATA.params.totalGoals},用二分法解出双方进球率 λ₁、λ₂,使双泊松比分分布给出的期望积分
-  恰好等于 We。比分分布因此与 Elo 完全自洽,没有额外的自由参数。</p>
-  <p><b>淘汰赛推进。</b>90 分钟战平进入加时(进球率取常规时间的三分之一),
-  仍平则点球按五五开处理。从当前真实对阵出发,对剩余赛程做 ${DATA.nSims.toLocaleString()}
-  次 Monte Carlo 模拟,统计各队晋级与夺冠概率;单场比分分布为解析计算。</p>
-  <p><b>更新。</b>GitHub Actions 每日抓取最新赛果与 Elo,有新比赛完赛才会重算并发布,
-  代码见 <a href="https://github.com/yingwang/worldcup-predictions">仓库</a>。</p>
-  <p><b>已知局限。</b>模型不含阵容、伤停、红牌停赛与天气;点球五五开是有意的保守选择;
-  主场分只按国境判断,不衡量实际球迷构成。这些都是噪声来源,也是足球的一部分。</p>`;
+function setLang(next) {
+  lang = next;
+  localStorage.setItem("lang", lang);
+  render();
+}
+
+function render() {
+  const tx = texts[lang];
+  document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+  document.title = tx.pageTitle;
+  document.getElementById("title").textContent = tx.title;
+  document.getElementById("subline").textContent = tx.subline();
+  document.getElementById("champ-title").textContent = tx.champTitle;
+  document.getElementById("path-title").textContent = tx.pathTitle;
+  document.getElementById("path-sub").textContent = tx.pathSub;
+  document.getElementById("detail-title").textContent = tx.detailTitle;
+  document.getElementById("pairs-title").textContent = tx.pairsTitle;
+  document.getElementById("method-title").textContent = tx.methodTitle;
+  document.getElementById("method").innerHTML = tx.method();
+  document.getElementById("disclaimer").textContent = tx.disclaimer;
+  document.getElementById("lang-zh").classList.toggle("active", lang === "zh");
+  document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  renderChamp();
+  renderPath();
+  renderDetail();
+  renderPairs();
+}
+
+document.getElementById("lang-zh").addEventListener("click", () => setLang("zh"));
+document.getElementById("lang-en").addEventListener("click", () => setLang("en"));
+render();
 </script>
 </body>
 </html>
