@@ -59,6 +59,7 @@
     border: 1px solid var(--border); color: var(--dim); vertical-align: 1px;
   }
   .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .card > .metric-grid:last-child { margin-bottom: 0; }
   .metric {
     background: #0d1117; border: 1px solid var(--border);
     border-radius: 10px; padding: 10px 12px;
@@ -101,6 +102,10 @@
     </div>
   </div>
 
+  <h2 id="stats-title">Stats</h2>
+  <div class="sub" id="stats-sub"></div>
+  <div class="card" id="stats"></div>
+
   <h2 id="champ-title">夺冠概率</h2>
   <div class="card" id="champ"></div>
 
@@ -136,11 +141,13 @@ const texts = {
     title: "2026 世界杯淘汰赛量化预测",
     pageTitle: "2026 世界杯淘汰赛量化预测",
     subline: () => `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 每日自动更新`,
+    statsTitle: "Stats",
+    statsSub: "赛前预测快照的回测汇总:晋级方按实际晋级队计算,比分按 90 分钟含补时计算。",
     champTitle: "夺冠概率",
     pathTitle: "推演:90 分钟最可能比分与晋级方",
     pathSub: "已赛场次显示真实结果;如果赛前已经保存过预测,会同时显示当时的预测比分和晋级方。未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。",
-    accuracyTitle: "预测准确率",
-    accuracySub: "只统计赛前已经保存过预测快照、后来又完赛的场次。预测比分是 90 分钟含补时比分;实际 90 分钟比分优先用 ESPN linescores 补充。",
+    accuracyTitle: "逐场回测",
+    accuracySub: "只统计赛前已经保存过预测快照、后来又完赛的场次。每一行显示当时预测、实际 90 分钟比分和命中情况。",
     detailTitle: "剩余场次逐场概率",
     pairsTitle: "最可能的决赛组合",
     methodTitle: "方法",
@@ -150,8 +157,8 @@ const texts = {
     advance: "晋级",
     scoreProb: "90 分钟该比分概率",
     evaluated: "已评估场次",
-    winnerAccuracy: "晋级方命中率",
-    scoreAccuracy: "90 分钟比分命中率",
+    winnerAccuracy: "预测结果命中率",
+    scoreAccuracy: "预测比分命中率",
     finalScore: "最终",
     score90: "90分钟",
     scoreET: "加时后",
@@ -198,11 +205,13 @@ const texts = {
     title: "2026 World Cup Knockout Predictions",
     pageTitle: "2026 World Cup Knockout Predictions",
     subline: () => `Data as of ${DATA.dataDate} · Elo from eloratings.net · ${DATA.nSims.toLocaleString()} Monte Carlo simulations · daily auto-update`,
+    statsTitle: "Stats",
+    statsSub: "Backtest summary for saved pre-match prediction snapshots: advancer accuracy uses the real team that advanced; score accuracy uses the 90-minute score including stoppage time.",
     champTitle: "Title probabilities",
     pathTitle: "Projection: most likely 90-minute score and advancer",
     pathSub: "Played matches show real results. If a pre-match snapshot was saved, the original predicted score and advancer are shown as well. Future matches use the model's most likely 90-minute score and advancer.",
-    accuracyTitle: "Prediction accuracy",
-    accuracySub: "Only matches with a saved pre-match prediction snapshot are evaluated. Predicted scores are 90-minute scores including stoppage time; actual 90-minute scores are enriched from ESPN linescores when available.",
+    accuracyTitle: "Backtest details",
+    accuracySub: "Only matches with a saved pre-match prediction snapshot are evaluated. Each row shows the saved prediction, actual 90-minute score, and hit/miss status.",
     detailTitle: "Match-by-match probabilities",
     pairsTitle: "Most likely final pairings",
     methodTitle: "Method",
@@ -212,8 +221,8 @@ const texts = {
     advance: "advance",
     scoreProb: "90-minute score probability",
     evaluated: "Evaluated matches",
-    winnerAccuracy: "Advancer accuracy",
-    scoreAccuracy: "90-min score accuracy",
+    winnerAccuracy: "Result accuracy",
+    scoreAccuracy: "Score accuracy",
     finalScore: "Final",
     score90: "90 min",
     scoreET: "After ET",
@@ -299,6 +308,34 @@ function actualBreakdown(actual) {
   return parts.join(" · ");
 }
 
+function renderStats() {
+  const tx = texts[lang];
+  const el = document.getElementById("stats");
+  const acc = DATA.accuracy || {total: 0, rows: []};
+  if (!acc.total) {
+    el.innerHTML = `<div class="fine">${tx.noAccuracy}</div>`;
+    return;
+  }
+  const scoreTotal = acc.scoreEvaluated ?? acc.total;
+  el.innerHTML = `
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-label">${tx.evaluated}</div>
+        <div class="metric-value">${acc.total}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">${tx.winnerAccuracy}</div>
+        <div class="metric-value">${pct(acc.winnerRate)}</div>
+        <div class="fine">${acc.winnerCorrect}/${acc.total}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">${tx.scoreAccuracy}</div>
+        <div class="metric-value">${acc.scoreRate === null ? "—" : pct(acc.scoreRate)}</div>
+        <div class="fine">${acc.scoreCorrect}/${scoreTotal}</div>
+      </div>
+    </div>`;
+}
+
 function renderChamp() {
   const el = document.getElementById("champ");
   const rows = DATA.champTable.filter(r => r.pC >= 0.001).slice(0, 14);
@@ -350,11 +387,6 @@ function renderAccuracy() {
     return;
   }
   el.innerHTML = `
-    <div class="metric-grid">
-      <div class="metric"><div class="metric-label">${tx.evaluated}</div><div class="metric-value">${acc.total}</div></div>
-      <div class="metric"><div class="metric-label">${tx.winnerAccuracy}</div><div class="metric-value">${pct(acc.winnerRate)}</div><div class="fine">${acc.winnerCorrect}/${acc.total}</div></div>
-      <div class="metric"><div class="metric-label">${tx.scoreAccuracy}</div><div class="metric-value">${acc.scoreRate === null ? "—" : pct(acc.scoreRate)}</div><div class="fine">${acc.scoreCorrect}/${acc.scoreEvaluated}</div></div>
-    </div>
     <div style="overflow-x:auto"><table>
       <tr>
         <th>${tx.table.round}</th>
@@ -411,6 +443,8 @@ function render() {
   document.title = tx.pageTitle;
   document.getElementById("title").textContent = tx.title;
   document.getElementById("subline").textContent = tx.subline();
+  document.getElementById("stats-title").textContent = tx.statsTitle;
+  document.getElementById("stats-sub").textContent = tx.statsSub;
   document.getElementById("champ-title").textContent = tx.champTitle;
   document.getElementById("path-title").textContent = tx.pathTitle;
   document.getElementById("path-sub").textContent = tx.pathSub;
@@ -423,6 +457,7 @@ function render() {
   document.getElementById("disclaimer").textContent = tx.disclaimer;
   document.getElementById("lang-zh").classList.toggle("active", lang === "zh");
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  renderStats();
   renderChamp();
   renderPath();
   renderAccuracy();
