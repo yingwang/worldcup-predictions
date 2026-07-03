@@ -59,7 +59,7 @@ const DATA = {
   "CH": {
    "zh": "瑞士",
    "en": "Switzerland",
-   "elo": 1914,
+   "elo": 1943,
    "flag": "🇨🇭"
   },
   "BE": {
@@ -107,7 +107,7 @@ const DATA = {
   "DZ": {
    "zh": "阿尔及利亚",
    "en": "Algeria",
-   "elo": 1785,
+   "elo": 1756,
    "flag": "🇩🇿"
   },
   "CA": {
@@ -207,7 +207,8 @@ const DATA = {
    "winner": "CA",
    "played": true,
    "score": "0-1",
-   "note": ""
+   "note": "",
+   "score90": "0-1"
   },
   {
    "id": "R32_B",
@@ -220,7 +221,8 @@ const DATA = {
    "winner": "BR",
    "played": true,
    "score": "2-1",
-   "note": ""
+   "note": "",
+   "score90": "2-1"
   },
   {
    "id": "R32_C",
@@ -233,7 +235,10 @@ const DATA = {
    "winner": "PY",
    "played": true,
    "score": "1-1",
-   "note": "点球 3-4"
+   "note": "点球 3-4",
+   "score90": "1-1",
+   "scoreET": "1-1",
+   "penaltyScore": "3-4"
   },
   {
    "id": "R32_D",
@@ -246,7 +251,10 @@ const DATA = {
    "winner": "MA",
    "played": true,
    "score": "1-1",
-   "note": "点球 2-3"
+   "note": "点球 2-3",
+   "score90": "1-1",
+   "scoreET": "1-1",
+   "penaltyScore": "2-3"
   },
   {
    "id": "R32_E",
@@ -259,7 +267,8 @@ const DATA = {
    "winner": "NO",
    "played": true,
    "score": "1-2",
-   "note": ""
+   "note": "",
+   "score90": "1-2"
   },
   {
    "id": "R32_F",
@@ -272,7 +281,8 @@ const DATA = {
    "winner": "FR",
    "played": true,
    "score": "3-0",
-   "note": ""
+   "note": "",
+   "score90": "3-0"
   },
   {
    "id": "R32_G",
@@ -285,7 +295,8 @@ const DATA = {
    "winner": "MX",
    "played": true,
    "score": "2-0",
-   "note": ""
+   "note": "",
+   "score90": "2-0"
   },
   {
    "id": "R32_H",
@@ -298,7 +309,8 @@ const DATA = {
    "winner": "EN",
    "played": true,
    "score": "2-1",
-   "note": ""
+   "note": "",
+   "score90": "2-1"
   },
   {
    "id": "R32_I",
@@ -311,7 +323,9 @@ const DATA = {
    "winner": "BE",
    "played": true,
    "score": "3-2",
-   "note": "加时"
+   "note": "加时",
+   "score90": "2-2",
+   "scoreET": "3-2"
   },
   {
    "id": "R32_J",
@@ -324,7 +338,8 @@ const DATA = {
    "winner": "US",
    "played": true,
    "score": "2-0",
-   "note": ""
+   "note": "",
+   "score90": "2-0"
   },
   {
    "id": "R32_K",
@@ -338,6 +353,7 @@ const DATA = {
    "played": true,
    "score": "3-0",
    "note": "",
+   "score90": "3-0",
    "prediction": {
     "archivedDate": "2026-07-02",
     "a": "ES",
@@ -388,6 +404,7 @@ const DATA = {
    "played": true,
    "score": "2-0",
    "note": "",
+   "score90": "2-0",
    "prediction": {
     "archivedDate": "2026-07-02",
     "a": "CH",
@@ -438,6 +455,7 @@ const DATA = {
    "played": true,
    "score": "2-1",
    "note": "",
+   "score90": "2-1",
    "prediction": {
     "archivedDate": "2026-07-02",
     "a": "PT",
@@ -906,36 +924,36 @@ const DATA = {
    "b": "CO",
    "winner": "CO",
    "played": false,
-   "pAdvance": 0.6428507777157944,
+   "pAdvance": 0.598180415677615,
    "score": "1-1",
-   "scoreP": 0.11995163024575266,
+   "scoreP": 0.1229375635736707,
    "note": "加时/点球",
-   "pWin90": 0.2471595957004742,
-   "pDraw90": 0.25228264526558764,
-   "pLoss90": 0.5005577590339382,
+   "pWin90": 0.2838682241342053,
+   "pDraw90": 0.25847350497338983,
+   "pLoss90": 0.45765827089240485,
    "topScores": [
     {
      "s": "1-1",
-     "p": 0.11995163024575266
+     "p": 0.1229375635736707
     },
     {
      "s": "0-1",
-     "p": 0.11689667132099557
+     "p": 0.11041137712037948
     },
     {
      "s": "1-2",
-     "p": 0.09439390583009019
-    },
-    {
-     "s": "0-2",
-     "p": 0.09198985759441793
+     "p": 0.09137640881406751
     },
     {
      "s": "1-0",
-     "p": 0.0762146320362725
+     "p": 0.08269992623688861
+    },
+    {
+     "s": "0-2",
+     "p": 0.08206600846965798
     }
    ],
-   "eloA": 1914,
+   "eloA": 1943,
    "eloB": 2004
   },
   {
@@ -1278,6 +1296,7 @@ const DATA = {
  "accuracy": {
   "total": 3,
   "winnerCorrect": 3,
+  "scoreEvaluated": 3,
   "scoreCorrect": 0,
   "winnerRate": 1.0,
   "scoreRate": 0.0,
@@ -1330,9 +1349,13 @@ const DATA = {
     "actual": {
      "winner": "ES",
      "score": "3-0",
+     "score90": "3-0",
+     "scoreET": null,
+     "penaltyScore": null,
      "note": ""
     },
     "winnerCorrect": true,
+    "scoreEvaluated": true,
     "scoreCorrect": false
    },
    {
@@ -1383,9 +1406,13 @@ const DATA = {
     "actual": {
      "winner": "CH",
      "score": "2-0",
+     "score90": "2-0",
+     "scoreET": null,
+     "penaltyScore": null,
      "note": ""
     },
     "winnerCorrect": true,
+    "scoreEvaluated": true,
     "scoreCorrect": false
    },
    {
@@ -1436,9 +1463,13 @@ const DATA = {
     "actual": {
      "winner": "PT",
      "score": "2-1",
+     "score90": "2-1",
+     "scoreET": null,
+     "penaltyScore": null,
      "note": ""
     },
     "winnerCorrect": true,
+    "scoreEvaluated": true,
     "scoreCorrect": false
    }
   ]
@@ -1452,7 +1483,7 @@ const DATA = {
    "pQF": 0.89001,
    "pSF": 0.76894,
    "pF": 0.53492,
-   "pC": 0.28261
+   "pC": 0.28308
   },
   {
    "code": "AR",
@@ -1460,9 +1491,9 @@ const DATA = {
    "en": "Argentina",
    "elo": 2148,
    "pQF": 0.90394,
-   "pSF": 0.68916,
-   "pF": 0.40761,
-   "pC": 0.25246
+   "pSF": 0.68171,
+   "pF": 0.40316,
+   "pC": 0.24981
   },
   {
    "code": "ES",
@@ -1471,8 +1502,8 @@ const DATA = {
    "elo": 2159,
    "pQF": 0.72542,
    "pSF": 0.61255,
-   "pF": 0.36787,
-   "pC": 0.23368
+   "pF": 0.36824,
+   "pC": 0.23392
   },
   {
    "code": "BR",
@@ -1482,7 +1513,7 @@ const DATA = {
    "pQF": 0.6548,
    "pSF": 0.36556,
    "pF": 0.15891,
-   "pC": 0.0605
+   "pC": 0.06067
   },
   {
    "code": "EN",
@@ -1492,17 +1523,17 @@ const DATA = {
    "pQF": 0.50629,
    "pSF": 0.29062,
    "pF": 0.1331,
-   "pC": 0.05275
+   "pC": 0.05282
   },
   {
    "code": "CO",
    "zh": "哥伦比亚",
    "en": "Colombia",
    "elo": 2004,
-   "pQF": 0.61301,
-   "pSF": 0.20338,
-   "pF": 0.07945,
-   "pC": 0.03137
+   "pQF": 0.57119,
+   "pSF": 0.18955,
+   "pF": 0.07401,
+   "pC": 0.02905
   },
   {
    "code": "PT",
@@ -1511,8 +1542,8 @@ const DATA = {
    "elo": 2013,
    "pQF": 0.27458,
    "pSF": 0.18309,
-   "pF": 0.06987,
-   "pC": 0.02866
+   "pF": 0.06998,
+   "pC": 0.0287
   },
   {
    "code": "MX",
@@ -1522,7 +1553,7 @@ const DATA = {
    "pQF": 0.49371,
    "pSF": 0.20381,
    "pF": 0.06417,
-   "pC": 0.0163
+   "pC": 0.01635
   },
   {
    "code": "NO",
@@ -1532,7 +1563,17 @@ const DATA = {
    "pQF": 0.3452,
    "pSF": 0.14001,
    "pF": 0.04401,
-   "pC": 0.0107
+   "pC": 0.01069
+  },
+  {
+   "code": "CH",
+   "zh": "瑞士",
+   "en": "Switzerland",
+   "elo": 1943,
+   "pQF": 0.42499,
+   "pSF": 0.10823,
+   "pF": 0.03232,
+   "pC": 0.01063
   },
   {
    "code": "MA",
@@ -1542,7 +1583,7 @@ const DATA = {
    "pQF": 0.68912,
    "pSF": 0.14551,
    "pF": 0.04692,
-   "pC": 0.00871
+   "pC": 0.00868
   },
   {
    "code": "BE",
@@ -1551,18 +1592,8 @@ const DATA = {
    "elo": 1910,
    "pQF": 0.51807,
    "pSF": 0.10964,
-   "pF": 0.02746,
-   "pC": 0.00739
-  },
-  {
-   "code": "CH",
-   "zh": "瑞士",
-   "en": "Switzerland",
-   "elo": 1914,
-   "pQF": 0.38237,
-   "pSF": 0.08589,
-   "pF": 0.02248,
-   "pC": 0.00651
+   "pF": 0.02733,
+   "pC": 0.0074
   },
   {
    "code": "US",
@@ -1571,8 +1602,8 @@ const DATA = {
    "elo": 1798,
    "pQF": 0.48193,
    "pSF": 0.09472,
-   "pF": 0.02237,
-   "pC": 0.00569
+   "pF": 0.02222,
+   "pC": 0.00556
   },
   {
    "code": "PY",
@@ -1582,7 +1613,7 @@ const DATA = {
    "pQF": 0.10999,
    "pSF": 0.05019,
    "pF": 0.01206,
-   "pC": 0.00172
+   "pC": 0.00171
   },
   {
    "code": "CA",
@@ -1592,7 +1623,7 @@ const DATA = {
    "pQF": 0.31088,
    "pSF": 0.03536,
    "pF": 0.00591,
-   "pC": 0.00058
+   "pC": 0.00057
   },
   {
    "code": "AU",
@@ -1600,9 +1631,9 @@ const DATA = {
    "en": "Australia",
    "elo": 1800,
    "pQF": 0.06047,
-   "pSF": 0.01549,
-   "pF": 0.00233,
-   "pC": 0.00031
+   "pSF": 0.01484,
+   "pF": 0.00222,
+   "pC": 0.00029
   },
   {
    "code": "EG",
@@ -1610,9 +1641,9 @@ const DATA = {
    "en": "Egypt",
    "elo": 1742,
    "pQF": 0.02958,
-   "pSF": 0.00531,
-   "pF": 0.00046,
-   "pC": 6e-05
+   "pSF": 0.005,
+   "pF": 0.00043,
+   "pC": 7e-05
   },
   {
    "code": "CV",
@@ -1620,8 +1651,8 @@ const DATA = {
    "en": "Cape Verde",
    "elo": 1622,
    "pQF": 0.00601,
-   "pSF": 0.0006,
-   "pF": 0.0001,
+   "pSF": 0.00054,
+   "pF": 9e-05,
    "pC": 0.0
   },
   {
@@ -1629,8 +1660,8 @@ const DATA = {
    "zh": "加纳",
    "en": "Ghana",
    "elo": 1575,
-   "pQF": 0.00462,
-   "pSF": 0.00017,
+   "pQF": 0.00382,
+   "pSF": 0.00013,
    "pF": 0.0,
    "pC": 0.0
   }
@@ -1642,7 +1673,7 @@ const DATA = {
     "FR"
    ],
    "zh": "阿根廷 vs 法国",
-   "p": 0.21817
+   "p": 0.21586
   },
   {
    "pair": [
@@ -1650,7 +1681,7 @@ const DATA = {
     "FR"
    ],
    "zh": "西班牙 vs 法国",
-   "p": 0.1978
+   "p": 0.19793
   },
   {
    "pair": [
@@ -1658,7 +1689,7 @@ const DATA = {
     "BR"
    ],
    "zh": "阿根廷 vs 巴西",
-   "p": 0.06409
+   "p": 0.06336
   },
   {
    "pair": [
@@ -1666,7 +1697,7 @@ const DATA = {
     "ES"
    ],
    "zh": "巴西 vs 西班牙",
-   "p": 0.05822
+   "p": 0.05828
   },
   {
    "pair": [
@@ -1674,7 +1705,7 @@ const DATA = {
     "EN"
    ],
    "zh": "阿根廷 vs 英格兰",
-   "p": 0.05434
+   "p": 0.05365
   },
   {
    "pair": [
@@ -1682,7 +1713,7 @@ const DATA = {
     "ES"
    ],
    "zh": "英格兰 vs 西班牙",
-   "p": 0.04814
+   "p": 0.04839
   },
   {
    "pair": [
@@ -1690,7 +1721,7 @@ const DATA = {
     "FR"
    ],
    "zh": "哥伦比亚 vs 法国",
-   "p": 0.04146
+   "p": 0.03873
   },
   {
    "pair": [
@@ -1698,7 +1729,7 @@ const DATA = {
     "PT"
    ],
    "zh": "法国 vs 葡萄牙",
-   "p": 0.03711
+   "p": 0.03716
   }
  ],
  "params": {

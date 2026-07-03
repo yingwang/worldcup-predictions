@@ -2,9 +2,11 @@
 """每日数据刷新:抓最新赛果与 Elo,写回 state.json。
 
 数据源:
-  1. 赛果: Wikipedia「2026 FIFA World Cup knockout stage」页面的 wikitext,
+  1. 赛果基础: Wikipedia「2026 FIFA World Cup knockout stage」页面的 wikitext,
      解析 footballbox 模板(team1 / score / team2 / penaltyscore)。
-  2. Elo: eloratings.net World.tsv。
+  2. 90 分钟比分补充: ESPN soccer API 的 linescores,用于区分常规时间、
+     加时和点球。
+  3. Elo: eloratings.net World.tsv。
 
 只在状态真的变化(有新赛果或参赛队 Elo 更新)时改写 state.json 并更新
 dataDate;没有变化则不落盘,配合 CI 里的「无 diff 不提交」实现
@@ -23,6 +25,8 @@ WIKI_API = ("https://en.wikipedia.org/w/api.php?action=parse"
             "&page=2026_FIFA_World_Cup_knockout_stage"
             "&prop=wikitext&formatversion=2&format=json")
 ELO_TSV = "https://eloratings.net/World.tsv"
+ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates={date}"
+ESPN_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event={event_id}"
 UA = {"User-Agent": "worldcup-predictions/1.0 (github.com; daily elo+results refresh)"}
 
 # Wikipedia 使用 FIFA 三字码,映射到本仓库的 ISO 两字码
@@ -34,6 +38,13 @@ FIFA_TO_ISO = {
     "CPV": "CV", "GHA": "GH", "NED": "NL", "GER": "DE", "JPN": "JP",
     "ECU": "EC", "SEN": "SN", "SWE": "SE", "CIV": "CI", "COD": "CD",
     "BIH": "BA", "RSA": "ZA",
+}
+ESPN_TO_ISO = FIFA_TO_ISO | {
+    "ESP": "ES",
+    "ENG": "EN",
+    "GER": "DE",
+    "NED": "NL",
+    "SUI": "CH",
 }
 
 
@@ -81,6 +92,130 @@ def parse_wiki_results():
     return by_pair
 
 
+def int_score(value):
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_linescore_score(competitor, periods):
+    lines = competitor.get("linescores") or []
+    if len(lines) < periods:
+        return None
+    scores = []
+    for line in lines[:periods]:
+        v = int_score(line.get("value", line.get("displayValue")))
+        if v is None:
+            return None
+        scores.append(v)
+    return sum(scores)
+
+
+def parse_espn_summary(event_id):
+    data = json.loads(fetch(ESPN_SUMMARY.format(event_id=event_id)))
+    comp = data.get("header", {}).get("competitions", [{}])[0]
+    competitors = comp.get("competitors", [])
+    if len(competitors) != 2:
+        return None
+
+    teams = []
+    for c in competitors:
+        abbr = c.get("team", {}).get("abbreviation", "")
+        code = ESPN_TO_ISO.get(abbr)
+        final_score = int_score(c.get("score"))
+        if code is None or final_score is None:
+            return None
+        teams.append({
+            "code": code,
+            "winner": bool(c.get("winner")),
+            "scoreFinal": final_score,
+            "score90": parse_linescore_score(c, 2),
+            "scoreET": parse_linescore_score(c, 4),
+            "penalty": int_score(c.get("shootoutScore")),
+        })
+
+    a, b = teams
+    status_name = comp.get("status", {}).get("type", {}).get("name", "")
+    penalty_score = None
+    note = ""
+    if "PEN" in status_name and a["penalty"] is not None and b["penalty"] is not None:
+        penalty_score = [a["penalty"], b["penalty"]]
+        note = f"点球 {a['penalty']}-{b['penalty']}"
+    elif "AET" in status_name:
+        note = "加时"
+
+    winner = a["code"] if a["winner"] else b["code"] if b["winner"] else None
+    if winner is None:
+        if a["scoreFinal"] > b["scoreFinal"]:
+            winner = a["code"]
+        elif b["scoreFinal"] > a["scoreFinal"]:
+            winner = b["code"]
+        elif penalty_score:
+            winner = a["code"] if penalty_score[0] > penalty_score[1] else b["code"]
+        else:
+            return None
+
+    result = {
+        "a": a["code"],
+        "b": b["code"],
+        "score": [a["scoreFinal"], b["scoreFinal"]],
+        "score90": [a["score90"], b["score90"]] if a["score90"] is not None and b["score90"] is not None else None,
+        "note": note,
+        "winner": winner,
+    }
+    if a["scoreET"] is not None and b["scoreET"] is not None:
+        result["scoreET"] = [a["scoreET"], b["scoreET"]]
+    if penalty_score:
+        result["penaltyScore"] = penalty_score
+    return result
+
+
+def parse_espn_results():
+    by_pair = {}
+    dates = sorted({"2026" + m["date"].replace("-", "") for m in ALL_MATCHES})
+    for date in dates:
+        data = json.loads(fetch(ESPN_SCOREBOARD.format(date=date)))
+        for event in data.get("events", []):
+            status = event.get("status", {}).get("type", {})
+            if not status.get("completed"):
+                continue
+            result = parse_espn_summary(event["id"])
+            if result is None:
+                continue
+            by_pair[frozenset((result["a"], result["b"]))] = result
+    return by_pair
+
+
+def merge_result_sources(wiki_results, espn_results):
+    merged = dict(wiki_results)
+    for pair, espn in espn_results.items():
+        if pair in merged:
+            old = merged[pair]
+            merged[pair] = {**old, **{k: v for k, v in espn.items() if v is not None}}
+        else:
+            merged[pair] = espn
+    return merged
+
+
+def orient_result(hit, a, b):
+    """把来源结果转成对阵树中的 a/b 顺序。"""
+    if hit["a"] == a and hit["b"] == b:
+        return {k: v for k, v in hit.items() if k not in {"a", "b"}}
+    flipped = {}
+    for k, v in hit.items():
+        if k in {"a", "b"}:
+            continue
+        if k in {"score", "score90", "scoreET", "penaltyScore"} and isinstance(v, list) and len(v) == 2:
+            flipped[k] = [v[1], v[0]]
+        elif k == "note" and isinstance(v, str) and v.startswith("点球 "):
+            p = v.split()[1].split("-")
+            flipped[k] = f"点球 {p[1]}-{p[0]}"
+        else:
+            flipped[k] = v
+    return flipped
+
+
 def map_results_to_bracket(by_pair, old_results):
     """沿对阵树推进,把按队伍对解析出的结果对应到比赛编号。
 
@@ -101,19 +236,17 @@ def map_results_to_bracket(by_pair, old_results):
             b = resolve_team(m["b"], winners, losers)
             if a is None or b is None:
                 continue
+            hit = by_pair.get(frozenset((a, b)))
             if mid in results:
+                if hit is not None:
+                    oriented = orient_result(hit, a, b)
+                    if {**results[mid], **oriented} != results[mid]:
+                        results[mid] = {**results[mid], **oriented}
                 losers[mid] = b if results[mid]["winner"] == a else a
                 continue
-            hit = by_pair.get(frozenset((a, b)))
             if hit is None:
                 continue
-            # 统一为对阵树中的主客顺序
-            score = hit["score"] if hit["a"] == a else [hit["score"][1], hit["score"][0]]
-            note = hit["note"]
-            if hit["a"] != a and note.startswith("点球"):
-                p = note.split()[1].split("-")
-                note = f"点球 {p[1]}-{p[0]}"
-            results[mid] = {"score": score, "note": note, "winner": hit["winner"]}
+            results[mid] = orient_result(hit, a, b)
             winners[mid] = hit["winner"]
             losers[mid] = b if hit["winner"] == a else a
             changed = True
@@ -140,7 +273,14 @@ def main():
     changed = False
 
     try:
-        by_pair = parse_wiki_results()
+        wiki_results = parse_wiki_results()
+        try:
+            espn_results = parse_espn_results()
+            by_pair = merge_result_sources(wiki_results, espn_results)
+            print(f"espn: enriched {len(espn_results)} finished matches")
+        except Exception as e:
+            by_pair = wiki_results
+            print(f"espn: FAILED ({e}), using Wikipedia only", file=sys.stderr)
         new_results = map_results_to_bracket(by_pair, state["results"])
         if new_results != state["results"]:
             state["results"] = new_results

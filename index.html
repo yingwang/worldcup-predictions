@@ -140,7 +140,7 @@ const texts = {
     pathTitle: "推演:90 分钟最可能比分与晋级方",
     pathSub: "已赛场次显示真实结果;如果赛前已经保存过预测,会同时显示当时的预测比分和晋级方。未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。",
     accuracyTitle: "预测准确率",
-    accuracySub: "只统计赛前已经保存过预测快照、后来又完赛的场次。没有赛前快照的历史场次不硬补,避免用赛后信息冒充预测。",
+    accuracySub: "只统计赛前已经保存过预测快照、后来又完赛的场次。预测比分是 90 分钟含补时比分;实际 90 分钟比分优先用 ESPN linescores 补充。",
     detailTitle: "剩余场次逐场概率",
     pairsTitle: "最可能的决赛组合",
     methodTitle: "方法",
@@ -151,7 +151,12 @@ const texts = {
     scoreProb: "90 分钟该比分概率",
     evaluated: "已评估场次",
     winnerAccuracy: "晋级方命中率",
-    scoreAccuracy: "比分命中率",
+    scoreAccuracy: "90 分钟比分命中率",
+    finalScore: "最终",
+    score90: "90分钟",
+    scoreET: "加时后",
+    penalties: "点球",
+    notEvaluated: "不计",
     hit: "命中",
     miss: "未中",
     noAccuracy: "还没有可评估的赛前预测快照。后续比赛会自动保存预测,赛后再计算命中率。",
@@ -197,7 +202,7 @@ const texts = {
     pathTitle: "Projection: most likely 90-minute score and advancer",
     pathSub: "Played matches show real results. If a pre-match snapshot was saved, the original predicted score and advancer are shown as well. Future matches use the model's most likely 90-minute score and advancer.",
     accuracyTitle: "Prediction accuracy",
-    accuracySub: "Only matches with a saved pre-match prediction snapshot are evaluated. Older matches without snapshots are not backfilled from post-match data.",
+    accuracySub: "Only matches with a saved pre-match prediction snapshot are evaluated. Predicted scores are 90-minute scores including stoppage time; actual 90-minute scores are enriched from ESPN linescores when available.",
     detailTitle: "Match-by-match probabilities",
     pairsTitle: "Most likely final pairings",
     methodTitle: "Method",
@@ -208,7 +213,12 @@ const texts = {
     scoreProb: "90-minute score probability",
     evaluated: "Evaluated matches",
     winnerAccuracy: "Advancer accuracy",
-    scoreAccuracy: "Exact score accuracy",
+    scoreAccuracy: "90-min score accuracy",
+    finalScore: "Final",
+    score90: "90 min",
+    scoreET: "After ET",
+    penalties: "Pens",
+    notEvaluated: "n/a",
     hit: "hit",
     miss: "miss",
     noAccuracy: "No evaluable pre-match prediction snapshots yet. Future matches will be archived before kickoff and evaluated after results arrive.",
@@ -279,6 +289,16 @@ function predictionText(pred) {
     · ${teamName(pred.winner)} ${tx.advance} ${pct(pred.pAdvance,0)}`;
 }
 
+function actualBreakdown(actual) {
+  const tx = texts[lang];
+  const parts = [];
+  if (actual.score90) parts.push(`${tx.score90} <b>${actual.score90}</b>`);
+  if (actual.scoreET && actual.scoreET !== actual.score90) parts.push(`${tx.scoreET} ${actual.scoreET}`);
+  if (actual.penaltyScore) parts.push(`${tx.penalties} ${actual.penaltyScore}`);
+  parts.push(`${tx.finalScore} ${actual.score}${matchNote(actual.note)}`);
+  return parts.join(" · ");
+}
+
 function renderChamp() {
   const el = document.getElementById("champ");
   const rows = DATA.champTable.filter(r => r.pC >= 0.001).slice(0, 14);
@@ -313,6 +333,7 @@ function renderPath() {
         ${m.played
           ? `<span class="prob">${tx.played}</span>`
           : `<span class="prob">${teamName(m.winner)} ${tx.advance} ${pct(m.pAdvance,0)} · ${tx.scoreProb} ${pct(m.scoreP)}</span>`}
+        ${m.played && m.score90 ? `<span class="pred-line">${actualBreakdown(m)}</span>` : ""}
         ${m.played && m.prediction ? `<span class="pred-line">${predictionText(m.prediction)}</span>` : ""}
       </div>`;
     }
@@ -331,8 +352,8 @@ function renderAccuracy() {
   el.innerHTML = `
     <div class="metric-grid">
       <div class="metric"><div class="metric-label">${tx.evaluated}</div><div class="metric-value">${acc.total}</div></div>
-      <div class="metric"><div class="metric-label">${tx.winnerAccuracy}</div><div class="metric-value">${pct(acc.winnerRate)}</div></div>
-      <div class="metric"><div class="metric-label">${tx.scoreAccuracy}</div><div class="metric-value">${pct(acc.scoreRate)}</div></div>
+      <div class="metric"><div class="metric-label">${tx.winnerAccuracy}</div><div class="metric-value">${pct(acc.winnerRate)}</div><div class="fine">${acc.winnerCorrect}/${acc.total}</div></div>
+      <div class="metric"><div class="metric-label">${tx.scoreAccuracy}</div><div class="metric-value">${acc.scoreRate === null ? "—" : pct(acc.scoreRate)}</div><div class="fine">${acc.scoreCorrect}/${acc.scoreEvaluated}</div></div>
     </div>
     <div style="overflow-x:auto"><table>
       <tr>
@@ -348,9 +369,9 @@ function renderAccuracy() {
           <td>${tx.rounds[r.round]}<div class="fine">${r.date} · ${r.city}</div></td>
           <td>${teamName(r.a)} vs ${teamName(r.b)}</td>
           <td>${teamName(r.prediction.winner)} · ${r.prediction.score}${matchNote(r.prediction.note)}</td>
-          <td>${teamName(r.actual.winner)} · ${r.actual.score}${matchNote(r.actual.note)}</td>
+          <td>${teamName(r.actual.winner)} · ${actualBreakdown(r.actual)}</td>
           <td class="num ${r.winnerCorrect ? "ok" : "miss"}">${r.winnerCorrect ? tx.hit : tx.miss}</td>
-          <td class="num ${r.scoreCorrect ? "ok" : "miss"}">${r.scoreCorrect ? tx.hit : tx.miss}</td>
+          <td class="num ${!r.scoreEvaluated ? "" : r.scoreCorrect ? "ok" : "miss"}">${!r.scoreEvaluated ? tx.notEvaluated : r.scoreCorrect ? tx.hit : tx.miss}</td>
         </tr>`).join("")}
     </table></div>`;
 }

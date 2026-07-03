@@ -183,6 +183,12 @@ def modal_path():
                 "score": f'{r["score"][0]}-{r["score"][1]}',
                 "note": r["note"],
             }
+            if r.get("score90") is not None:
+                row["score90"] = f'{r["score90"][0]}-{r["score90"][1]}'
+            if r.get("scoreET") is not None:
+                row["scoreET"] = f'{r["scoreET"][0]}-{r["scoreET"][1]}'
+            if r.get("penaltyScore") is not None:
+                row["penaltyScore"] = f'{r["penaltyScore"][0]}-{r["penaltyScore"][1]}'
             pred = PREDICTION_HISTORY.get(mid)
             if pred and pred.get("a") == a and pred.get("b") == b:
                 row["prediction"] = pred
@@ -268,6 +274,8 @@ def accuracy_summary(path):
             continue
         pred = p["prediction"]
         actual_score = p["score"]
+        actual_score90 = p.get("score90")
+        score_evaluated = actual_score90 is not None
         row = {
             "id": p["id"],
             "round": p["round"],
@@ -280,22 +288,28 @@ def accuracy_summary(path):
             "actual": {
                 "winner": p["winner"],
                 "score": actual_score,
+                "score90": actual_score90,
+                "scoreET": p.get("scoreET"),
+                "penaltyScore": p.get("penaltyScore"),
                 "note": p["note"],
             },
             "winnerCorrect": pred["winner"] == p["winner"],
-            "scoreCorrect": pred["score"] == actual_score,
+            "scoreEvaluated": score_evaluated,
+            "scoreCorrect": score_evaluated and pred["score"] == actual_score90,
         }
         rows.append(row)
 
     total = len(rows)
     winner_correct = sum(1 for r in rows if r["winnerCorrect"])
+    score_evaluated = sum(1 for r in rows if r["scoreEvaluated"])
     score_correct = sum(1 for r in rows if r["scoreCorrect"])
     return {
         "total": total,
         "winnerCorrect": winner_correct,
+        "scoreEvaluated": score_evaluated,
         "scoreCorrect": score_correct,
         "winnerRate": winner_correct / total if total else None,
-        "scoreRate": score_correct / total if total else None,
+        "scoreRate": score_correct / score_evaluated if score_evaluated else None,
         "rows": rows,
     }
 
@@ -367,10 +381,11 @@ def main():
         print(f'{row["zh"]}: {row["p"]*100:.1f}%')
     if accuracy["total"]:
         print("\n=== 赛前预测回测 ===")
+        score_rate = accuracy["scoreRate"] * 100 if accuracy["scoreRate"] is not None else 0
         print(f'晋级方命中 {accuracy["winnerCorrect"]}/{accuracy["total"]} '
               f'({accuracy["winnerRate"]*100:.1f}%), '
-              f'比分命中 {accuracy["scoreCorrect"]}/{accuracy["total"]} '
-              f'({accuracy["scoreRate"]*100:.1f}%)')
+              f'90分钟比分命中 {accuracy["scoreCorrect"]}/{accuracy["scoreEvaluated"]} '
+              f'({score_rate:.1f}%)')
 
 if __name__ == "__main__":
     main()

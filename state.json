@@ -11,7 +11,7 @@
   "PT": 2013,
   "MX": 1943,
   "NO": 1934,
-  "CH": 1914,
+  "CH": 1943,
   "BE": 1910,
   "HR": 1882,
   "MA": 1886,
@@ -19,7 +19,7 @@
   "PY": 1823,
   "AU": 1800,
   "US": 1798,
-  "DZ": 1785,
+  "DZ": 1756,
   "CA": 1764,
   "EG": 1742,
   "CV": 1622,
@@ -42,7 +42,11 @@
     1
    ],
    "note": "",
-   "winner": "CA"
+   "winner": "CA",
+   "score90": [
+    0,
+    1
+   ]
   },
   "R32_B": {
    "score": [
@@ -50,7 +54,11 @@
     1
    ],
    "note": "",
-   "winner": "BR"
+   "winner": "BR",
+   "score90": [
+    2,
+    1
+   ]
   },
   "R32_C": {
    "score": [
@@ -58,7 +66,19 @@
     1
    ],
    "note": "点球 3-4",
-   "winner": "PY"
+   "winner": "PY",
+   "score90": [
+    1,
+    1
+   ],
+   "scoreET": [
+    1,
+    1
+   ],
+   "penaltyScore": [
+    3,
+    4
+   ]
   },
   "R32_D": {
    "score": [
@@ -66,7 +86,19 @@
     1
    ],
    "note": "点球 2-3",
-   "winner": "MA"
+   "winner": "MA",
+   "score90": [
+    1,
+    1
+   ],
+   "scoreET": [
+    1,
+    1
+   ],
+   "penaltyScore": [
+    2,
+    3
+   ]
   },
   "R32_E": {
    "score": [
@@ -74,7 +106,11 @@
     2
    ],
    "note": "",
-   "winner": "NO"
+   "winner": "NO",
+   "score90": [
+    1,
+    2
+   ]
   },
   "R32_F": {
    "score": [
@@ -82,7 +118,11 @@
     0
    ],
    "note": "",
-   "winner": "FR"
+   "winner": "FR",
+   "score90": [
+    3,
+    0
+   ]
   },
   "R32_G": {
    "score": [
@@ -90,7 +130,11 @@
     0
    ],
    "note": "",
-   "winner": "MX"
+   "winner": "MX",
+   "score90": [
+    2,
+    0
+   ]
   },
   "R32_H": {
    "score": [
@@ -98,7 +142,11 @@
     1
    ],
    "note": "",
-   "winner": "EN"
+   "winner": "EN",
+   "score90": [
+    2,
+    1
+   ]
   },
   "R32_I": {
    "score": [
@@ -106,7 +154,15 @@
     2
    ],
    "note": "加时",
-   "winner": "BE"
+   "winner": "BE",
+   "score90": [
+    2,
+    2
+   ],
+   "scoreET": [
+    3,
+    2
+   ]
   },
   "R32_J": {
    "score": [
@@ -114,7 +170,11 @@
     0
    ],
    "note": "",
-   "winner": "US"
+   "winner": "US",
+   "score90": [
+    2,
+    0
+   ]
   },
   "R32_K": {
    "score": [
@@ -122,7 +182,11 @@
     0
    ],
    "note": "",
-   "winner": "ES"
+   "winner": "ES",
+   "score90": [
+    3,
+    0
+   ]
   },
   "R32_L": {
    "score": [
@@ -130,7 +194,11 @@
     0
    ],
    "note": "",
-   "winner": "CH"
+   "winner": "CH",
+   "score90": [
+    2,
+    0
+   ]
   },
   "R32_M": {
    "score": [
@@ -138,7 +206,11 @@
     1
    ],
    "note": "",
-   "winner": "PT"
+   "winner": "PT",
+   "score90": [
+    2,
+    1
+   ]
   }
  },
  "predictionHistory": {
