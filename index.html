@@ -8,7 +8,7 @@
   :root {
     --bg: #0d1117; --card: #161b22; --border: #30363d;
     --text: #e6edf3; --dim: #8b949e; --accent: #3fb950;
-    --accent2: #58a6ff; --gold: #d29922;
+    --accent2: #58a6ff; --gold: #d29922; --bad: #f85149;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -53,10 +53,20 @@
   .team-flag { margin-right: 3px; }
   .match.played { opacity: .55; }
   .match.played .score { color: var(--text); }
+  .pred-line { width: 100%; margin-left: calc(8.5em + 10px); color: var(--dim); font-size: .78rem; }
   .badge {
     display: inline-block; font-size: .7rem; padding: 0 6px; border-radius: 8px;
     border: 1px solid var(--border); color: var(--dim); vertical-align: 1px;
   }
+  .metric-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .metric {
+    background: #0d1117; border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .metric-label { color: var(--dim); font-size: .78rem; }
+  .metric-value { font-size: 1.25rem; font-weight: 700; margin-top: 2px; }
+  .ok { color: var(--accent); }
+  .miss { color: var(--bad); }
   table { width: 100%; border-collapse: collapse; font-size: .88rem; }
   th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border);
            font-variant-numeric: tabular-nums; }
@@ -73,6 +83,8 @@
     .topbar { display: block; }
     .lang-toggle { margin: 10px 0 0; }
     .match .meta { width: 100%; }
+    .pred-line { margin-left: 0; }
+    .metric-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -95,6 +107,10 @@
   <h2 id="path-title">推演:90 分钟最可能比分与晋级方</h2>
   <div class="sub" id="path-sub">已赛场次为真实结果(灰显);未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。</div>
   <div class="card" id="path"></div>
+
+  <h2 id="accuracy-title">预测准确率</h2>
+  <div class="sub" id="accuracy-sub">只统计赛前已经保存过预测快照、后来又完赛的场次。</div>
+  <div class="card" id="accuracy"></div>
 
   <h2 id="detail-title">剩余场次逐场概率</h2>
   <div class="card" style="overflow-x:auto"><table id="detail"></table></div>
@@ -122,17 +138,31 @@ const texts = {
     subline: () => `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 每日自动更新`,
     champTitle: "夺冠概率",
     pathTitle: "推演:90 分钟最可能比分与晋级方",
-    pathSub: "已赛场次为真实结果(灰显);未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。",
+    pathSub: "已赛场次显示真实结果;如果赛前已经保存过预测,会同时显示当时的预测比分和晋级方。未赛场次取模型 90 分钟最可能比分与晋级方,逐轮推进。",
+    accuracyTitle: "预测准确率",
+    accuracySub: "只统计赛前已经保存过预测快照、后来又完赛的场次。没有赛前快照的历史场次不硬补,避免用赛后信息冒充预测。",
     detailTitle: "剩余场次逐场概率",
     pairsTitle: "最可能的决赛组合",
     methodTitle: "方法",
     played: "已赛",
+    predicted: "赛前预测",
+    actual: "实际结果",
     advance: "晋级",
     scoreProb: "90 分钟该比分概率",
+    evaluated: "已评估场次",
+    winnerAccuracy: "晋级方命中率",
+    scoreAccuracy: "比分命中率",
+    hit: "命中",
+    miss: "未中",
+    noAccuracy: "还没有可评估的赛前预测快照。后续比赛会自动保存预测,赛后再计算命中率。",
     rounds: {R32:"32 强", R16:"16 强", QF:"八强", SF:"半决赛", TP:"季军赛", F:"决赛"},
     table: {
       round: "轮次",
       matchup: "对阵 (Elo 含主场分)",
+      prediction: "赛前预测",
+      actual: "实际结果",
+      winnerHit: "晋级方",
+      scoreHit: "比分",
       wdl: "90 分钟胜/平/负",
       adv: "晋级概率",
       scores: "90 分钟最可能比分 (前三)",
@@ -165,17 +195,31 @@ const texts = {
     subline: () => `Data as of ${DATA.dataDate} · Elo from eloratings.net · ${DATA.nSims.toLocaleString()} Monte Carlo simulations · daily auto-update`,
     champTitle: "Title probabilities",
     pathTitle: "Projection: most likely 90-minute score and advancer",
-    pathSub: "Played matches use real results and are dimmed; future matches use the model's most likely 90-minute score and advancer, then roll forward round by round.",
+    pathSub: "Played matches show real results. If a pre-match snapshot was saved, the original predicted score and advancer are shown as well. Future matches use the model's most likely 90-minute score and advancer.",
+    accuracyTitle: "Prediction accuracy",
+    accuracySub: "Only matches with a saved pre-match prediction snapshot are evaluated. Older matches without snapshots are not backfilled from post-match data.",
     detailTitle: "Match-by-match probabilities",
     pairsTitle: "Most likely final pairings",
     methodTitle: "Method",
     played: "played",
+    predicted: "pre-match",
+    actual: "actual",
     advance: "advance",
     scoreProb: "90-minute score probability",
+    evaluated: "Evaluated matches",
+    winnerAccuracy: "Advancer accuracy",
+    scoreAccuracy: "Exact score accuracy",
+    hit: "hit",
+    miss: "miss",
+    noAccuracy: "No evaluable pre-match prediction snapshots yet. Future matches will be archived before kickoff and evaluated after results arrive.",
     rounds: {R32:"Round of 32", R16:"Round of 16", QF:"Quarterfinals", SF:"Semifinals", TP:"Third-place match", F:"Final"},
     table: {
       round: "Round",
       matchup: "Matchup (Elo incl. home bonus)",
+      prediction: "Pre-match prediction",
+      actual: "Actual result",
+      winnerHit: "Advancer",
+      scoreHit: "Score",
       wdl: "90-min W/D/L",
       adv: "Advance probability",
       scores: "Most likely 90-min scores (top 3)",
@@ -225,6 +269,16 @@ function teamName(code) {
   return `<span class="team-flag">${t.flag || ""}</span>${name}`;
 }
 
+function matchNote(note) {
+  return note ? ` <span class="badge">${texts[lang].note(note)}</span>` : "";
+}
+
+function predictionText(pred) {
+  const tx = texts[lang];
+  return `${tx.predicted}: ${teamName(pred.a)} <b>${pred.score}</b> ${teamName(pred.b)}${matchNote(pred.note)}
+    · ${teamName(pred.winner)} ${tx.advance} ${pct(pred.pAdvance,0)}`;
+}
+
 function renderChamp() {
   const el = document.getElementById("champ");
   const rows = DATA.champTable.filter(r => r.pC >= 0.001).slice(0, 14);
@@ -254,15 +308,51 @@ function renderPath() {
           <span class="${wA ? "win" : ""}">${teamName(m.a)}</span>
           <span class="score"> ${m.score} </span>
           <span class="${!wA ? "win" : ""}">${teamName(m.b)}</span>
-          ${m.note ? `<span class="badge">${tx.note(m.note)}</span>` : ""}
+          ${matchNote(m.note)}
         </span>
         ${m.played
           ? `<span class="prob">${tx.played}</span>`
           : `<span class="prob">${teamName(m.winner)} ${tx.advance} ${pct(m.pAdvance,0)} · ${tx.scoreProb} ${pct(m.scoreP)}</span>`}
+        ${m.played && m.prediction ? `<span class="pred-line">${predictionText(m.prediction)}</span>` : ""}
       </div>`;
     }
   }
   el.innerHTML = html;
+}
+
+function renderAccuracy() {
+  const tx = texts[lang];
+  const el = document.getElementById("accuracy");
+  const acc = DATA.accuracy || {total: 0, rows: []};
+  if (!acc.total) {
+    el.innerHTML = `<div class="fine">${tx.noAccuracy}</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-label">${tx.evaluated}</div><div class="metric-value">${acc.total}</div></div>
+      <div class="metric"><div class="metric-label">${tx.winnerAccuracy}</div><div class="metric-value">${pct(acc.winnerRate)}</div></div>
+      <div class="metric"><div class="metric-label">${tx.scoreAccuracy}</div><div class="metric-value">${pct(acc.scoreRate)}</div></div>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <tr>
+        <th>${tx.table.round}</th>
+        <th>${tx.table.matchup}</th>
+        <th>${tx.table.prediction}</th>
+        <th>${tx.table.actual}</th>
+        <th class="num">${tx.table.winnerHit}</th>
+        <th class="num">${tx.table.scoreHit}</th>
+      </tr>
+      ${acc.rows.map(r => `
+        <tr>
+          <td>${tx.rounds[r.round]}<div class="fine">${r.date} · ${r.city}</div></td>
+          <td>${teamName(r.a)} vs ${teamName(r.b)}</td>
+          <td>${teamName(r.prediction.winner)} · ${r.prediction.score}${matchNote(r.prediction.note)}</td>
+          <td>${teamName(r.actual.winner)} · ${r.actual.score}${matchNote(r.actual.note)}</td>
+          <td class="num ${r.winnerCorrect ? "ok" : "miss"}">${r.winnerCorrect ? tx.hit : tx.miss}</td>
+          <td class="num ${r.scoreCorrect ? "ok" : "miss"}">${r.scoreCorrect ? tx.hit : tx.miss}</td>
+        </tr>`).join("")}
+    </table></div>`;
 }
 
 function renderDetail() {
@@ -303,6 +393,8 @@ function render() {
   document.getElementById("champ-title").textContent = tx.champTitle;
   document.getElementById("path-title").textContent = tx.pathTitle;
   document.getElementById("path-sub").textContent = tx.pathSub;
+  document.getElementById("accuracy-title").textContent = tx.accuracyTitle;
+  document.getElementById("accuracy-sub").textContent = tx.accuracySub;
   document.getElementById("detail-title").textContent = tx.detailTitle;
   document.getElementById("pairs-title").textContent = tx.pairsTitle;
   document.getElementById("method-title").textContent = tx.methodTitle;
@@ -312,6 +404,7 @@ function render() {
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
   renderChamp();
   renderPath();
+  renderAccuracy();
   renderDetail();
   renderPairs();
 }

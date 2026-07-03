@@ -41,6 +41,7 @@ with open("state.json", encoding="utf-8") as f:
     STATE = json.load(f)
 ELO = STATE["elo"]
 RESULTS = STATE["results"]
+PREDICTION_HISTORY = STATE.setdefault("predictionHistory", {})
 
 def flag_emoji(code):
     """ISO 两字码转国旗 emoji;英格兰单独处理。"""
@@ -174,14 +175,18 @@ def modal_path():
         if r is not None:
             winners[mid] = r["winner"]
             losers[mid] = b if r["winner"] == a else a
-            path.append({
+            row = {
                 "id": mid, "round": ROUND_OF[mid], "roundZh": ROUND_ZH[ROUND_OF[mid]],
                 "date": m["date"], "city": m["city"],
                 "a": a, "b": b, "winner": r["winner"],
                 "played": True,
                 "score": f'{r["score"][0]}-{r["score"][1]}',
                 "note": r["note"],
-            })
+            }
+            pred = PREDICTION_HISTORY.get(mid)
+            if pred and pred.get("a") == a and pred.get("b") == b:
+                row["prediction"] = pred
+            path.append(row)
             continue
         mm = match_model(a, b, m["venue"])
         win = a if mm["pAdvance"] >= 0.5 else b
@@ -203,11 +208,104 @@ def modal_path():
         })
     return path
 
+
+def prediction_snapshot(m, a, b):
+    """当前模型对一场已知对阵的赛前预测快照。"""
+    mm = match_model(a, b, m["venue"])
+    win = a if mm["pAdvance"] >= 0.5 else b
+    top = mm["topScores"][0]
+    s_i, s_j = map(int, top["s"].split("-"))
+    return {
+        "archivedDate": STATE["dataDate"],
+        "a": a,
+        "b": b,
+        "winner": win,
+        "pAdvance": mm["pAdvance"] if win == a else 1 - mm["pAdvance"],
+        "score": top["s"],
+        "scoreP": top["p"],
+        "note": "加时/点球" if s_i == s_j else "",
+        "pWin90": mm["pWin90"],
+        "pDraw90": mm["pDraw90"],
+        "pLoss90": mm["pLoss90"],
+        "topScores": mm["topScores"],
+        "eloA": mm["eloA"],
+        "eloB": mm["eloB"],
+    }
+
+
+def archive_current_predictions():
+    """冻结赛前预测。
+
+    只保存已经由真实赛果确定参与方、但本场尚未开赛的比赛。这样后续赛果进来时,
+    页面展示的是当时真正可见的对阵预测,而不是用预测路径推出来的假赛前记录。
+    """
+    changed = False
+    winners = {}
+    losers = {}
+    for m in ALL_MATCHES:
+        mid = m["id"]
+        a = resolve_team(m["a"], winners, losers)
+        b = resolve_team(m["b"], winners, losers)
+        if a is None or b is None:
+            continue
+        r = RESULTS.get(mid)
+        if r is not None:
+            winners[mid] = r["winner"]
+            losers[mid] = b if r["winner"] == a else a
+            continue
+        pred = PREDICTION_HISTORY.get(mid)
+        if pred and pred.get("a") == a and pred.get("b") == b:
+            continue
+        PREDICTION_HISTORY[mid] = prediction_snapshot(m, a, b)
+        changed = True
+    return changed
+
+
+def accuracy_summary(path):
+    rows = []
+    for p in path:
+        if not p.get("played") or "prediction" not in p:
+            continue
+        pred = p["prediction"]
+        actual_score = p["score"]
+        row = {
+            "id": p["id"],
+            "round": p["round"],
+            "roundZh": p["roundZh"],
+            "date": p["date"],
+            "city": p["city"],
+            "a": p["a"],
+            "b": p["b"],
+            "prediction": pred,
+            "actual": {
+                "winner": p["winner"],
+                "score": actual_score,
+                "note": p["note"],
+            },
+            "winnerCorrect": pred["winner"] == p["winner"],
+            "scoreCorrect": pred["score"] == actual_score,
+        }
+        rows.append(row)
+
+    total = len(rows)
+    winner_correct = sum(1 for r in rows if r["winnerCorrect"])
+    score_correct = sum(1 for r in rows if r["scoreCorrect"])
+    return {
+        "total": total,
+        "winnerCorrect": winner_correct,
+        "scoreCorrect": score_correct,
+        "winnerRate": winner_correct / total if total else None,
+        "scoreRate": score_correct / total if total else None,
+        "rows": rows,
+    }
+
 # ---------------------------------------------------------------- 主流程
 
 def main():
+    predictions_changed = archive_current_predictions()
     counts, final_pairs = run_simulation()
     path = modal_path()
+    accuracy = accuracy_summary(path)
 
     alive = {p["a"] for p in path if not p["played"]} | {p["b"] for p in path if not p["played"]}
     alive |= {p["winner"] for p in path}
@@ -237,6 +335,7 @@ def main():
         "teams": {c: {"zh": t["zh"], "en": t["en"], "elo": ELO[c], "flag": flag_emoji(c)}
                   for c, t in TEAMS.items()},
         "modalPath": path,
+        "accuracy": accuracy,
         "champTable": champ_table,
         "finalPairs": pairs_table,
         "params": {"totalGoals": TOTAL_GOALS, "homeBonus": HOME_BONUS},
@@ -245,6 +344,12 @@ def main():
         f.write("const DATA = ")
         json.dump(data, f, ensure_ascii=False, indent=1)
         f.write(";\n")
+
+    if predictions_changed:
+        with open("state.json", "w", encoding="utf-8") as f:
+            json.dump(STATE, f, ensure_ascii=False, indent=1)
+            f.write("\n")
+        print("predictionHistory updated")
 
     print("=== 夺冠概率 Top 10 ===")
     for row in champ_table[:10]:
@@ -260,6 +365,12 @@ def main():
     print("\n=== 最可能决赛 ===")
     for row in pairs_table[:5]:
         print(f'{row["zh"]}: {row["p"]*100:.1f}%')
+    if accuracy["total"]:
+        print("\n=== 赛前预测回测 ===")
+        print(f'晋级方命中 {accuracy["winnerCorrect"]}/{accuracy["total"]} '
+              f'({accuracy["winnerRate"]*100:.1f}%), '
+              f'比分命中 {accuracy["scoreCorrect"]}/{accuracy["total"]} '
+              f'({accuracy["scoreRate"]*100:.1f}%)')
 
 if __name__ == "__main__":
     main()
