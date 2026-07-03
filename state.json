@@ -1,25 +1,144 @@
 {
- "dataDate": "2026-07-02",
+ "dataDate": "2026-07-03",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
-  "AR": 2148, "ES": 2144, "FR": 2134, "EN": 2046, "BR": 2031,
-  "CO": 2004, "PT": 1990, "MX": 1943, "NO": 1934, "CH": 1914,
-  "BE": 1910, "HR": 1905, "MA": 1886, "AT": 1836, "PY": 1823,
-  "AU": 1800, "US": 1798, "DZ": 1785, "CA": 1764, "EG": 1742,
-  "CV": 1622, "GH": 1575,
-  "NL": 1971, "DE": 1908, "JP": 1888, "EC": 1871, "SN": 1816,
-  "SE": 1731, "CI": 1727, "CD": 1704, "BA": 1605, "ZA": 1559
+  "AR": 2148,
+  "ES": 2159,
+  "FR": 2134,
+  "EN": 2046,
+  "BR": 2031,
+  "CO": 2004,
+  "PT": 2013,
+  "MX": 1943,
+  "NO": 1934,
+  "CH": 1914,
+  "BE": 1910,
+  "HR": 1882,
+  "MA": 1886,
+  "AT": 1821,
+  "PY": 1823,
+  "AU": 1800,
+  "US": 1798,
+  "DZ": 1785,
+  "CA": 1764,
+  "EG": 1742,
+  "CV": 1622,
+  "GH": 1575,
+  "NL": 1971,
+  "DE": 1908,
+  "JP": 1888,
+  "EC": 1871,
+  "SN": 1816,
+  "SE": 1731,
+  "CI": 1727,
+  "CD": 1704,
+  "BA": 1605,
+  "ZA": 1559
  },
  "results": {
-  "R32_A": {"score": [0, 1], "note": "",     "winner": "CA"},
-  "R32_B": {"score": [2, 1], "note": "",     "winner": "BR"},
-  "R32_C": {"score": [1, 1], "note": "点球 3-4", "winner": "PY"},
-  "R32_D": {"score": [1, 1], "note": "点球 2-3", "winner": "MA"},
-  "R32_E": {"score": [1, 2], "note": "",     "winner": "NO"},
-  "R32_F": {"score": [3, 0], "note": "",     "winner": "FR"},
-  "R32_G": {"score": [2, 0], "note": "",     "winner": "MX"},
-  "R32_H": {"score": [2, 1], "note": "",     "winner": "EN"},
-  "R32_I": {"score": [3, 2], "note": "加时", "winner": "BE"},
-  "R32_J": {"score": [2, 0], "note": "",     "winner": "US"}
+  "R32_A": {
+   "score": [
+    0,
+    1
+   ],
+   "note": "",
+   "winner": "CA"
+  },
+  "R32_B": {
+   "score": [
+    2,
+    1
+   ],
+   "note": "",
+   "winner": "BR"
+  },
+  "R32_C": {
+   "score": [
+    1,
+    1
+   ],
+   "note": "点球 3-4",
+   "winner": "PY"
+  },
+  "R32_D": {
+   "score": [
+    1,
+    1
+   ],
+   "note": "点球 2-3",
+   "winner": "MA"
+  },
+  "R32_E": {
+   "score": [
+    1,
+    2
+   ],
+   "note": "",
+   "winner": "NO"
+  },
+  "R32_F": {
+   "score": [
+    3,
+    0
+   ],
+   "note": "",
+   "winner": "FR"
+  },
+  "R32_G": {
+   "score": [
+    2,
+    0
+   ],
+   "note": "",
+   "winner": "MX"
+  },
+  "R32_H": {
+   "score": [
+    2,
+    1
+   ],
+   "note": "",
+   "winner": "EN"
+  },
+  "R32_I": {
+   "score": [
+    3,
+    2
+   ],
+   "note": "加时",
+   "winner": "BE"
+  },
+  "R32_J": {
+   "score": [
+    2,
+    0
+   ],
+   "note": "",
+   "winner": "US"
+  },
+  "R32_K": {
+   "score": [
+    3,
+    0
+   ],
+   "note": "",
+   "winner": "ES"
+  },
+  "R32_L": {
+   "score": [
+    2,
+    0
+   ],
+   "note": "",
+   "winner": "CH"
+  },
+  "R32_M": {
+   "score": [
+    2,
+    1
+   ],
+   "note": "",
+   "winner": "PT"
+  }
  }
 }
