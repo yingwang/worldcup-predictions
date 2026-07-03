@@ -302,7 +302,7 @@ function actualBreakdown(actual) {
   const tx = texts[lang];
   const parts = [];
   if (actual.score90) parts.push(`${tx.score90} <b>${actual.score90}</b>`);
-  if (actual.scoreET && actual.scoreET !== actual.score90) parts.push(`${tx.scoreET} ${actual.scoreET}`);
+  if (actual.scoreET && (actual.scoreET !== actual.score90 || actual.penaltyScore)) parts.push(`${tx.scoreET} ${actual.scoreET}`);
   if (actual.penaltyScore) parts.push(`${tx.penalties} ${actual.penaltyScore}`);
   if (!parts.length) parts.push(`${tx.finalScore} ${actual.score}${matchNote(actual.note)}`);
   return parts.join(" · ");
