@@ -1,5 +1,5 @@
 {
- "dataDate": "2026-07-04 11:08 UTC",
+ "dataDate": "2026-07-04 19:52 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
   "AR": 2151,
@@ -258,6 +258,18 @@
    "score90": [
     1,
     0
+   ]
+  },
+  "R16_1": {
+   "score": [
+    0,
+    3
+   ],
+   "note": "",
+   "winner": "MA",
+   "score90": [
+    0,
+    3
    ]
   }
  },
@@ -780,5 +792,6 @@
    "eloA": 1943,
    "eloB": 2004
   }
- }
+ },
+ "lastChecked": "2026-07-04 19:52 UTC"
 }

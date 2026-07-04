@@ -136,11 +136,12 @@
 <script>
 const T = code => DATA.teams[code];
 const pct = (p, d=1) => (p*100).toFixed(d) + "%";
+const lastChecked = () => DATA.lastChecked || DATA.dataDate;
 const texts = {
   zh: {
     title: "2026 世界杯淘汰赛量化预测",
     pageTitle: "2026 世界杯淘汰赛量化预测",
-    subline: () => `数据截至 ${DATA.dataDate} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次 · 淘汰赛期间每天 6 次自动刷新`,
+    subline: () => `数据截至 ${DATA.dataDate} · 最近检查 ${lastChecked()} · Elo 来源 eloratings.net · Monte Carlo ${DATA.nSims.toLocaleString()} 次`,
     statsTitle: "Stats",
     statsSub: "赛前预测快照的回测汇总:晋级方按实际晋级队计算,比分按 90 分钟含补时计算。",
     champTitle: "夺冠概率",
@@ -195,7 +196,7 @@ const texts = {
       <p><b>淘汰赛推进。</b>90 分钟战平进入加时(进球率取常规时间的三分之一),
       仍平则点球按五五开处理。从当前真实对阵出发,对剩余赛程做 ${DATA.nSims.toLocaleString()}
       次 Monte Carlo 模拟,统计各队晋级与夺冠概率;单场比分分布为解析计算。</p>
-      <p><b>更新。</b>GitHub Actions 在淘汰赛到决赛期间每天 6 次抓取最新赛果与 Elo,有新比赛完赛才会重算并发布,
+      <p><b>更新。</b>GitHub Actions 在淘汰赛到决赛期间每天 6 次抓取最新赛果与 Elo,每次成功检查都会更新“最近检查”时间;有新比赛完赛或 Elo 变化时,才会更新“数据截至”和预测结果,
       代码见 <a href="https://github.com/yingwang/worldcup-predictions">仓库</a>。</p>
       <p><b>已知局限。</b>模型不含阵容、伤停、红牌停赛与天气;点球五五开是有意的保守选择;
       主场分只按国境判断,不衡量实际球迷构成。这些都是噪声来源,也是足球的一部分。</p>`,
@@ -204,7 +205,7 @@ const texts = {
   en: {
     title: "2026 World Cup Knockout Predictions",
     pageTitle: "2026 World Cup Knockout Predictions",
-    subline: () => `Data as of ${DATA.dataDate} · Elo from eloratings.net · ${DATA.nSims.toLocaleString()} Monte Carlo simulations · six scheduled refreshes per day during the knockout run`,
+    subline: () => `Data as of ${DATA.dataDate} · Last checked ${lastChecked()} · Elo from eloratings.net · ${DATA.nSims.toLocaleString()} Monte Carlo simulations`,
     statsTitle: "Stats",
     statsSub: "Backtest summary for saved pre-match prediction snapshots: advancer accuracy uses the real team that advanced; score accuracy uses the 90-minute score including stoppage time.",
     champTitle: "Title probabilities",
@@ -267,8 +268,9 @@ const texts = {
       current real bracket, the site runs ${DATA.nSims.toLocaleString()} Monte Carlo simulations of the
       remaining tournament and reports advancement and title probabilities. Individual score grids are
       computed analytically, not sampled.</p>
-      <p><b>Updates.</b>GitHub Actions fetches new results and Elo ratings six times per day through the final. When completed matches
-      change the state, predictions are rebuilt and published. Code:
+      <p><b>Updates.</b>GitHub Actions fetches new results and Elo ratings six times per day through the final.
+      Each successful check updates the last-checked time. When completed matches or Elo ratings change,
+      the data date and predictions are updated. Code:
       <a href="https://github.com/yingwang/worldcup-predictions">repository</a>.</p>
       <p><b>Known limits.</b>The model does not include squads, injuries, suspensions, weather, or tactical
       matchups. Penalties are deliberately conservative at 50/50. Home bonus is based only on host country,

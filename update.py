@@ -270,7 +270,9 @@ def main():
     with open("state.json", encoding="utf-8") as f:
         state = json.load(f)
 
-    changed = False
+    data_changed = False
+    results_checked = False
+    elo_checked = False
 
     try:
         wiki_results = parse_wiki_results()
@@ -284,7 +286,8 @@ def main():
         new_results = map_results_to_bracket(by_pair, state["results"])
         if new_results != state["results"]:
             state["results"] = new_results
-            changed = True
+            data_changed = True
+        results_checked = True
         print(f"results: parsed {len(by_pair)} finished matches, "
               f"mapped {len(new_results)} into bracket")
     except Exception as e:                              # 解析失败保留旧状态
@@ -294,13 +297,22 @@ def main():
         new_elo = parse_elo(state["elo"])
         if new_elo != state["elo"]:
             state["elo"] = new_elo
-            changed = True
+            data_changed = True
+        elo_checked = True
         print("elo: refreshed")
     except Exception as e:
         print(f"elo: FAILED ({e}), keeping previous", file=sys.stderr)
 
-    if changed:
-        state["dataDate"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    checked_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    state_changed = data_changed
+    if results_checked and elo_checked and state.get("lastChecked") != checked_at:
+        state["lastChecked"] = checked_at
+        state_changed = True
+
+    if data_changed:
+        state["dataDate"] = checked_at
+
+    if state_changed:
         with open("state.json", "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=1)
             f.write("\n")

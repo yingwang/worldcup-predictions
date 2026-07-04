@@ -345,6 +345,7 @@ def main():
 
     data = {
         "dataDate": STATE["dataDate"],
+        "lastChecked": STATE.get("lastChecked", STATE["dataDate"]),
         "nSims": N_SIMS,
         "teams": {c: {"zh": t["zh"], "en": t["en"], "elo": ELO[c], "flag": flag_emoji(c)}
                   for c, t in TEAMS.items()},
