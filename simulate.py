@@ -3,7 +3,7 @@
 
 方法:
   1. 队伍强度用 eloratings.net 的 World Football Elo Ratings(state.json 中的快照,
-     由 update.py 每日刷新)。
+     由 update.py 在赛期定时刷新)。
   2. 单场胜负期望 We = 1 / (1 + 10^(-d/400)),d 为 Elo 差。
      在本国境内比赛的球队按 eloratings.net 惯例加 100 Elo 主场分。
   3. 比分模型为双泊松:固定 90 分钟总进球期望 TOTAL_GOALS,用二分法解出两队

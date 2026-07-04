@@ -1,9 +1,10 @@
-name: daily-update
+name: tournament-update
 
 on:
   schedule:
-    # 07:17 UTC,北美当日所有比赛(最晚约 06:00 UTC 结束)均已完赛
-    - cron: '17 7 * * *'
+    # Knockout-stage refresh cadence through the final: six scheduled runs per UTC day.
+    # The commit step still skips clean runs, so this only publishes when results or Elo change.
+    - cron: '17 1,5,9,13,17,21 * * *'
   workflow_dispatch:
 
 permissions:
@@ -13,19 +14,40 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Check refresh window
+        id: window
+        run: |
+          if [[ "${{ github.event_name }}" != "schedule" ]]; then
+            echo "active=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          today="$(date -u +%Y-%m-%d)"
+          if [[ "$today" > "2026-07-20" ]]; then
+            echo "Final refresh window has ended; skipping scheduled run."
+            echo "active=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "active=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.window.outputs.active == 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.window.outputs.active == 'true'
         with:
           python-version: '3.12'
 
       - name: Refresh results and Elo
+        if: steps.window.outputs.active == 'true'
         run: python update.py
 
       - name: Rebuild predictions
+        if: steps.window.outputs.active == 'true'
         run: python simulate.py
 
       - name: Commit and push if changed
+        if: steps.window.outputs.active == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -33,6 +55,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No new results, nothing to commit."
           else
-            git commit -m "Data update $(date -u +%F)"
+            git commit -m "Data update $(date -u +%F-%H%M)"
             git push
           fi

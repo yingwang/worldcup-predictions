@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""每日数据刷新:抓最新赛果与 Elo,写回 state.json。
+"""赛期数据刷新:抓最新赛果与 Elo,写回 state.json。
 
 数据源:
   1. 赛果基础: Wikipedia「2026 FIFA World Cup knockout stage」页面的 wikitext,
@@ -27,7 +27,7 @@ WIKI_API = ("https://en.wikipedia.org/w/api.php?action=parse"
 ELO_TSV = "https://eloratings.net/World.tsv"
 ESPN_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates={date}"
 ESPN_SUMMARY = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event={event_id}"
-UA = {"User-Agent": "worldcup-predictions/1.0 (github.com; daily elo+results refresh)"}
+UA = {"User-Agent": "worldcup-predictions/1.0 (github.com; tournament elo+results refresh)"}
 
 # Wikipedia 使用 FIFA 三字码,映射到本仓库的 ISO 两字码
 FIFA_TO_ISO = {
@@ -300,7 +300,7 @@ def main():
         print(f"elo: FAILED ({e}), keeping previous", file=sys.stderr)
 
     if changed:
-        state["dataDate"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        state["dataDate"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         with open("state.json", "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=1)
             f.write("\n")
