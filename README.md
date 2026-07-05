@@ -141,3 +141,28 @@ be used for betting.
 | 🇨🇩 | CD | DR Congo | 刚果民主共和国 |
 | 🇧🇦 | BA | Bosnia and Herzegovina | 波黑 |
 | 🇿🇦 | ZA | South Africa | 南非 |
+
+## 测试 / Tests
+
+数学核心与解析逻辑有单元测试(纯标准库 + pytest),覆盖 Elo 到双泊松的反解、
+比分翻转、Wikipedia 模板解析,以及一条「解析到的完赛场次少于已知值就报错」的
+下界断言 —— 用来把 Wikipedia 模板变更导致的静默失效变成一次响亮的失败,而不是
+悄悄冻结在旧数据上。
+
+```bash
+python3 -m pytest -q
+```
+
+每次推送到 `main` 时 `.github/workflows/tests.yml` 会自动跑这些测试。
+
+The math core and parsing logic are covered by unit tests (standard library +
+pytest): the Elo-to-double-Poisson inversion, score orientation, Wikipedia
+template parsing, and a lower-bound guard that fails loudly when the number of
+parsed finished matches drops below what is already known. Tests run on every
+push via `.github/workflows/tests.yml`.
+
+## License / 授权
+
+代码使用 MIT 许可证,见 [LICENSE](LICENSE)。
+
+The source code is released under the MIT License; see [LICENSE](LICENSE).

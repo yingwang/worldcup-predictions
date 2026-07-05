@@ -48,6 +48,28 @@ ESPN_TO_ISO = FIFA_TO_ISO | {
 }
 
 
+class ResultsParseError(Exception):
+    """抓取成功、但解析出的完赛场次数少于已知值 —— 基本可以断定是解析器或数据源
+    回归(例如 Wikipedia 模板变了、正则匹配到 0 场),而不是「暂时还没有新赛果」。
+    用它把这种静默失效变成一次响亮的失败,而不是悄悄冻结在旧状态上。"""
+
+
+def assert_result_count(parsed_count, known_count):
+    """下界断言:完赛场次只会累积,绝不会变少。
+
+    一次成功的抓取所解析出的完赛场次,不应少于 state.json 里已经记录的数目;
+    每一场已知的完赛,数据源理应仍然报告为已完赛。如果反而更少,几乎等同于
+    解析静默失效,应当抛错、保留旧状态,并让 CI 响亮地失败。
+
+    权衡:极少数情况下(某场原本只由 ESPN 提供、随后 ESPN 临时失败而 Wikipedia
+    尚未更新)可能误报一次,但这类抖动会在下一次运行自愈,远好过无限静默冻结。
+    """
+    if known_count > 0 and parsed_count < known_count:
+        raise ResultsParseError(
+            f"解析到 {parsed_count} 场完赛,但 state 里已有 {known_count} 场;"
+            "Wikipedia/ESPN 解析很可能已失效")
+
+
 def fetch(url):
     req = urllib.request.Request(url, headers=UA)
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -65,9 +87,11 @@ _LINE = re.compile(
     r"\|(\d+)(?:\s*\((\d+)\))?\s*$",
     re.M)
 
-def parse_wiki_results():
-    """从 wikitext 的对阵树模板解析已完赛场次,返回 {frozenset(两队): 结果}。"""
-    wikitext = json.loads(fetch(WIKI_API))["parse"]["wikitext"]
+def parse_wiki_text(wikitext):
+    """从 wikitext 的对阵树模板解析已完赛场次,返回 {frozenset(两队): 结果}。
+
+    纯函数(不联网),便于单元测试与离线校验解析逻辑。
+    """
     by_pair = {}
     for m in _LINE.finditer(wikitext):
         t1, tag1, s1, p1, t2, tag2, s2, p2 = m.groups()
@@ -90,6 +114,12 @@ def parse_wiki_results():
         by_pair[frozenset((a, b))] = {"a": a, "b": b, "score": [s1, s2],
                                       "note": note, "winner": winner}
     return by_pair
+
+
+def parse_wiki_results():
+    """抓取 Wikipedia 淘汰赛页面并解析其中的已完赛场次。"""
+    wikitext = json.loads(fetch(WIKI_API))["parse"]["wikitext"]
+    return parse_wiki_text(wikitext)
 
 
 def int_score(value):
@@ -274,6 +304,7 @@ def main():
     results_checked = False
     elo_checked = False
 
+    results_parser_broken = False
     try:
         wiki_results = parse_wiki_results()
         try:
@@ -283,6 +314,8 @@ def main():
         except Exception as e:
             by_pair = wiki_results
             print(f"espn: FAILED ({e}), using Wikipedia only", file=sys.stderr)
+        # 下界断言:抓取成功却比已知完赛数还少 -> 解析器回归,响亮失败而非静默冻结
+        assert_result_count(len(by_pair), len(state["results"]))
         new_results = map_results_to_bracket(by_pair, state["results"])
         if new_results != state["results"]:
             state["results"] = new_results
@@ -290,7 +323,11 @@ def main():
         results_checked = True
         print(f"results: parsed {len(by_pair)} finished matches, "
               f"mapped {len(new_results)} into bracket")
-    except Exception as e:                              # 解析失败保留旧状态
+    except ResultsParseError as e:
+        print(f"results: PARSER REGRESSION ({e});保留旧状态并以非零码退出",
+              file=sys.stderr)
+        results_parser_broken = True
+    except Exception as e:                              # 网络/临时失败:保留旧状态,不误报
         print(f"results: FAILED ({e}), keeping previous", file=sys.stderr)
 
     try:
@@ -319,6 +356,10 @@ def main():
         print("state.json updated")
     else:
         print("no changes")
+
+    if results_parser_broken:
+        # 解析器回归:上面已保留旧状态,这里以非零码退出让 workflow 变红并通知
+        sys.exit(1)
 
 
 if __name__ == "__main__":
