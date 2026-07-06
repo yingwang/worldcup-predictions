@@ -1,5 +1,5 @@
 {
- "dataDate": "2026-07-06 12:57 UTC",
+ "dataDate": "2026-07-06 22:35 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
   "AR": 2151,
@@ -306,6 +306,18 @@
    "score90": [
     2,
     3
+   ]
+  },
+  "R16_5": {
+   "score": [
+    0,
+    1
+   ],
+   "note": "",
+   "winner": "ES",
+   "score90": [
+    0,
+    1
    ]
   }
  },
@@ -903,5 +915,5 @@
    "eloB": 2046
   }
  },
- "lastChecked": "2026-07-06 19:04 UTC"
+ "lastChecked": "2026-07-06 22:35 UTC"
 }
