@@ -1,5 +1,5 @@
 {
- "dataDate": "2026-07-08 04:30 UTC",
+ "dataDate": "2026-07-08 15:32 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
   "AR": 2156,
@@ -13,7 +13,7 @@
   "NO": 1972,
   "CH": 1949,
   "BE": 1961,
-  "HR": 1882,
+  "HR": 1881,
   "MA": 1921,
   "AT": 1821,
   "PY": 1814,
@@ -1033,5 +1033,5 @@
    "eloB": 1949
   }
  },
- "lastChecked": "2026-07-08 11:15 UTC"
+ "lastChecked": "2026-07-08 15:32 UTC"
 }
