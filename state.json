@@ -1,5 +1,5 @@
 {
- "dataDate": "2026-07-08 15:32 UTC",
+ "dataDate": "2026-07-09 22:42 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
   "AR": 2156,
@@ -362,6 +362,18 @@
    "penaltyScore": [
     4,
     3
+   ]
+  },
+  "QF1": {
+   "score": [
+    0,
+    2
+   ],
+   "note": "",
+   "winner": "FR",
+   "score90": [
+    0,
+    2
    ]
   }
  },
@@ -1033,5 +1045,5 @@
    "eloB": 1949
   }
  },
- "lastChecked": "2026-07-09 18:59 UTC"
+ "lastChecked": "2026-07-09 22:42 UTC"
 }
