@@ -22,9 +22,10 @@ World Football Elo Ratings，以及截至数据日期的真实赛果与对阵表
 加时和点球拆分）。不使用任何媒体预测、伤停消息或人工调整。
 
 单场比赛由 Elo 差 d 给出胜负期望 We = 1/(1+10^(−d/400))，在本国境内比赛的球队
-加 100 Elo 主场分，这与 eloratings.net 的惯例一致。比分层面固定 90 分钟两队合计
-进球期望为 2.6，用二分法解出双方进球率 λ₁ 与 λ₂，使双泊松比分分布给出的期望积分
-恰好等于 We。比分分布因此与 Elo 完全自洽，模型中没有额外的自由参数。
+加 100 Elo 主场分，这与 eloratings.net 的惯例一致。比分层面以 90 分钟两队合计
+进球期望 2.6 为基础，用二分法解出双方进球率 λ₁ 与 λ₂，使双泊松比分分布给出的期望积分
+恰好等于 We。若极端 Elo 差无法由该总进球数表达，模型仅对该场提高总进球期望至可解的最小值。
+比分分布因此始终与 Elo 一致，模型中没有额外的自由参数。
 
 淘汰赛推进规则：90 分钟战平进入加时，加时进球率取常规时间的三分之一；仍平则点球，
 按五五开处理，这是有意的保守选择。从当前真实对阵状态出发，对剩余赛程做十万次
@@ -73,9 +74,10 @@ and penalty splits. It does not use media forecasts, injuries, squad news, or ma
 
 For a single match, Elo difference d gives win expectancy We = 1/(1+10^(−d/400)). A team playing inside
 its own country receives a 100-point Elo home bonus, matching the convention used by eloratings.net.
-The model fixes total expected 90-minute goals at 2.6, then solves λ₁ and λ₂ by bisection so the
-double-Poisson grid has the same expected result as Elo. The score distribution is therefore tied
-directly to Elo and has no additional fitted strength parameter.
+The model uses 2.6 total expected 90-minute goals as its baseline, then solves λ₁ and λ₂ by bisection
+so the double-Poisson grid has the same expected result as Elo. If an extreme Elo gap cannot be
+represented at that total, it raises the total for that match only to the minimum solvable value. The
+score distribution is therefore tied directly to Elo and has no additional fitted strength parameter.
 
 A 90-minute draw goes to extra time, with extra-time scoring rates set to one third of normal time.
 If still level, penalties are treated as 50/50. Starting from the current real bracket, the model runs

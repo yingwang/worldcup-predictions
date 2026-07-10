@@ -38,8 +38,8 @@ def test_poisson_pmf_is_a_distribution():
     for lam in (0.2, 1.3, 2.6):
         pmf = simulate.poisson_pmf(lam)
         assert pmf[0] == pytest.approx(math.exp(-lam))
-        # 网格截断到 MAX_GOALS,总和应非常接近 1
-        assert sum(pmf) == pytest.approx(1.0, abs=1e-3)
+        # 自适应截断后,遗漏尾部应可忽略
+        assert sum(pmf) == pytest.approx(1.0, abs=simulate.PMF_TAIL_EPSILON * 2)
         assert all(p >= 0 for p in pmf)
 
 
@@ -47,12 +47,11 @@ def test_outcome_probs_normalized_and_symmetric():
     w, d, l = simulate.outcome_probs(1.6, 1.0)
     assert w + d + l == pytest.approx(1.0)
     assert w > l  # 进球期望更高的一方更可能取胜
-    # 交换两队:胜负大致互换。网格截断到 MAX_GOALS,损失项由 1-胜-平 吸收了
-    # 尾部质量,因此胜负交换存在约 1e-6 的不对称;平局是对角线双和,严格对称。
+    # 交换两队:胜负互换;平局保持不变。
     w2, d2, l2 = simulate.outcome_probs(1.0, 1.6)
-    assert w2 == pytest.approx(l, abs=1e-4)
-    assert l2 == pytest.approx(w, abs=1e-4)
-    assert d2 == pytest.approx(d)
+    assert w2 == pytest.approx(l, abs=1e-10)
+    assert l2 == pytest.approx(w, abs=1e-10)
+    assert d2 == pytest.approx(d, abs=1e-10)
     # 势均力敌:胜负对称
     we, de, le = simulate.outcome_probs(1.3, 1.3)
     assert we == pytest.approx(le, abs=1e-4)
@@ -72,6 +71,15 @@ def test_solve_lambdas_matches_target_expectancy():
     assert l1 == pytest.approx(l2, abs=1e-6)
     # We 越大,己方进球期望越高
     assert simulate.solve_lambdas(0.70)[0] > simulate.solve_lambdas(0.55)[0]
+
+
+def test_solve_lambdas_matches_extreme_elo_expectancy():
+    for d in (-1200, -800, 537, 617, 800, 1200):
+        we = simulate.win_expectancy(d)
+        l1, l2 = simulate.solve_lambdas(we)
+        w, draw, _ = simulate.outcome_probs(l1, l2)
+        assert w + 0.5 * draw == pytest.approx(we, abs=1e-9)
+        assert l1 + l2 >= simulate.TOTAL_GOALS
 
 
 # --------------------------------------------------------- 对阵树解析
@@ -127,6 +135,23 @@ def test_orient_result_flips_scores():
            "penaltyScore": [2, 4], "winner": "EN"}
     fp = update.orient_result(pen, "EN", "MX")
     assert fp["note"] == "点球 4-2" and fp["penaltyScore"] == [4, 2]
+
+
+def test_map_results_propagates_corrected_winner_to_later_round():
+    old_results = {
+        "R32_A": {"score": [0, 1], "note": "", "winner": "ZA"},
+        "R32_D": {"score": [1, 0], "note": "", "winner": "MA"},
+    }
+    by_pair = {
+        frozenset(("ZA", "CA")): {"a": "ZA", "b": "CA", "score": [0, 1], "note": "", "winner": "CA"},
+        frozenset(("NL", "MA")): {"a": "NL", "b": "MA", "score": [1, 0], "note": "", "winner": "MA"},
+        frozenset(("CA", "MA")): {"a": "CA", "b": "MA", "score": [2, 0], "note": "", "winner": "CA"},
+    }
+
+    results = update.map_results_to_bracket(by_pair, old_results)
+
+    assert results["R32_A"]["winner"] == "CA"
+    assert results["R16_1"]["winner"] == "CA"
 
 
 # ---------------------------------------- 下界断言(防静默冻结)

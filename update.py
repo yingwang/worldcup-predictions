@@ -272,6 +272,9 @@ def map_results_to_bracket(by_pair, old_results):
                     oriented = orient_result(hit, a, b)
                     if {**results[mid], **oriented} != results[mid]:
                         results[mid] = {**results[mid], **oriented}
+                        changed = True
+                # 已有赛果也可能被来源更正;本轮后续比赛必须立即使用更正后的胜者。
+                winners[mid] = results[mid]["winner"]
                 losers[mid] = b if results[mid]["winner"] == a else a
                 continue
             if hit is None:

@@ -190,9 +190,10 @@ const texts = {
       <p><b>输入。</b>模型只有两类输入:各队在 eloratings.net 的 World Football Elo Ratings,
       以及截至数据日期的真实赛果与对阵表。不使用任何媒体预测、伤停消息或人工调整。</p>
       <p><b>单场模型。</b>由 Elo 差 d 得胜负期望 We = 1/(1+10<sup>−d/400</sup>),
-      在本国境内比赛的球队加 ${DATA.params.homeBonus} Elo 主场分。固定 90 分钟两队合计进球期望为
-      ${DATA.params.totalGoals},用二分法解出双方进球率 λ₁、λ₂,使双泊松比分分布给出的期望积分
-      恰好等于 We。比分分布因此与 Elo 完全自洽,没有额外的自由参数。</p>
+      在本国境内比赛的球队加 ${DATA.params.homeBonus} Elo 主场分。90 分钟两队合计进球期望以
+      ${DATA.params.totalGoals} 为基础,用二分法解出双方进球率 λ₁、λ₂,使双泊松比分分布给出的期望积分
+      恰好等于 We;极端 Elo 差无法由该总进球数表达时,仅提高该场总进球期望至可解的最小值。比分分布因此与 Elo
+      完全自洽,没有额外的自由参数。</p>
       <p><b>淘汰赛推进。</b>90 分钟战平进入加时(进球率取常规时间的三分之一),
       仍平则点球按五五开处理。从当前真实对阵出发,对剩余赛程做 ${DATA.nSims.toLocaleString()}
       次 Monte Carlo 模拟,统计各队晋级与夺冠概率;单场比分分布为解析计算。</p>
@@ -259,10 +260,11 @@ const texts = {
       media forecasts, injury news, lineup assumptions, or manual adjustments.</p>
       <p><b>Single-match model.</b>An Elo difference d gives win expectancy
       We = 1/(1+10<sup>−d/400</sup>). A team playing inside its own country receives a
-      ${DATA.params.homeBonus}-point Elo home bonus. The model fixes total expected 90-minute goals at
-      ${DATA.params.totalGoals}, then solves λ₁ and λ₂ by bisection so the double-Poisson score grid has
-      the same expected result as Elo. The score distribution is therefore tied directly to Elo and has
-      no extra fitted strength parameter.</p>
+      ${DATA.params.homeBonus}-point Elo home bonus. The model uses ${DATA.params.totalGoals} total expected
+      90-minute goals as its baseline, then solves λ₁ and λ₂ by bisection so the double-Poisson score grid
+      has the same expected result as Elo. If an extreme Elo gap cannot be represented at that total, it
+      raises the total for that match only to the minimum solvable value. The score distribution is therefore
+      tied directly to Elo and has no extra fitted strength parameter.</p>
       <p><b>Knockout progression.</b>A 90-minute draw goes to extra time, with extra-time scoring rates set
       to one third of normal time. If still level, penalties are treated as 50/50. Starting from the
       current real bracket, the site runs ${DATA.nSims.toLocaleString()} Monte Carlo simulations of the

@@ -6,9 +6,10 @@
      由 update.py 在赛期定时刷新)。
   2. 单场胜负期望 We = 1 / (1 + 10^(-d/400)),d 为 Elo 差。
      在本国境内比赛的球队按 eloratings.net 惯例加 100 Elo 主场分。
-  3. 比分模型为双泊松:固定 90 分钟总进球期望 TOTAL_GOALS,用二分法解出两队
+  3. 比分模型为双泊松:以 90 分钟总进球期望 TOTAL_GOALS 为基准,用二分法解出两队
      进球期望 λ1、λ2,使双泊松给出的期望积分 P(胜) + 0.5*P(平) 恰好等于 Elo
-     胜负期望。比分分布因此与 Elo 完全自洽,没有自由拍定的强度参数。
+     胜负期望;极端 Elo 差不可表达时,仅提高该场总进球期望至可解最小值。比分分布因此
+     与 Elo 完全自洽,没有自由拍定的强度参数。
   4. 平局进入加时,加时进球率为常规时间的 1/3(30 分钟)。仍平则点球,
      按 50/50 处理(点球结果在统计上接近随机)。
   5. 从当前真实对阵状态(state.json 的已赛结果)出发,Monte Carlo 模拟
@@ -31,8 +32,9 @@ random.seed(20260702)
 N_SIMS = 100_000
 TOTAL_GOALS = 2.6          # 90 分钟两队合计进球期望(国际大赛长期均值)
 HOME_BONUS = 100           # 本国境内作赛的 Elo 主场加成
-MAX_GOALS = 10             # 双泊松网格上限
-MIN_LAMBDA = 0.05          # 单队进球期望下限(防极端悬殊时退化)
+MAX_GOALS = 10             # 泊松分布至少计算到的进球数
+PMF_TAIL_EPSILON = 1e-12   # 自适应截断后的最大遗漏概率
+TOTAL_GOALS_MARGIN = 1e-4  # 极端 Elo 差下确保二分目标落在开区间内
 SPECIAL_FLAGS = {
     "EN": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
 }
@@ -56,10 +58,17 @@ def flag_emoji(code):
 def win_expectancy(d):
     return 1.0 / (1.0 + 10.0 ** (-d / 400.0))
 
-def poisson_pmf(lam, kmax=MAX_GOALS):
+def poisson_pmf(lam, kmin=MAX_GOALS):
+    """泊松概率质量函数,自适应延长至剩余尾部可忽略。"""
+    if lam < 0:
+        raise ValueError("Poisson lambda must be non-negative")
     p = [math.exp(-lam)]
-    for k in range(1, kmax + 1):
+    total = p[0]
+    k = 0
+    while k < kmin or 1.0 - total > PMF_TAIL_EPSILON:
+        k += 1
         p.append(p[-1] * lam / k)
+        total += p[-1]
     return p
 
 def outcome_probs(l1, l2):
@@ -67,18 +76,29 @@ def outcome_probs(l1, l2):
     p1 = poisson_pmf(l1)
     p2 = poisson_pmf(l2)
     w = d = 0.0
-    for i in range(MAX_GOALS + 1):
-        for j in range(MAX_GOALS + 1):
-            pr = p1[i] * p2[j]
-            if i > j:
-                w += pr
-            elif i == j:
-                d += pr
+    p2_below = 0.0
+    for i, p in enumerate(p1):
+        if i:
+            p2_below += p2[i - 1] if i - 1 < len(p2) else 0.0
+        w += p * p2_below
+        if i < len(p2):
+            d += p * p2[i]
     return w, d, 1.0 - w - d
 
 def solve_lambdas(we, total=TOTAL_GOALS):
-    """解出 (λ1, λ2): λ1+λ2=total 且 P胜+0.5*P平=we。单调,二分即可。"""
-    lo, hi = -(total - 2 * MIN_LAMBDA), (total - 2 * MIN_LAMBDA)
+    """解出 (λ1, λ2),使双泊松的期望积分等于 Elo 胜负期望。
+
+    TOTAL_GOALS 是基础值。若极端 Elo 差在该固定总进球数下不可表达,则提高
+    该场总进球期望至刚好可解,避免静默地把胜负期望钳制在边界上。
+    """
+    if not 0.0 < we < 1.0:
+        raise ValueError("Win expectancy must be strictly between zero and one")
+
+    # 一方 λ=0 时,最大(或最小)可达的期望积分为 1-0.5*exp(-total)
+    # (或 0.5*exp(-total));不足时必须提高总进球期望才能保留 Elo 目标。
+    min_total = -math.log(2.0 * min(we, 1.0 - we)) + TOTAL_GOALS_MARGIN
+    total = max(total, min_total)
+    lo, hi = -total, total
     for _ in range(60):
         g = (lo + hi) / 2
         l1, l2 = (total + g) / 2, (total - g) / 2
