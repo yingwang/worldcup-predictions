@@ -1,6 +1,6 @@
 const DATA = {
- "dataDate": "2026-07-10 22:14 UTC",
- "lastChecked": "2026-07-11 10:32 UTC",
+ "dataDate": "2026-07-11 14:32 UTC",
+ "lastChecked": "2026-07-11 14:32 UTC",
  "nSims": 100000,
  "teams": {
   "AR": {
@@ -144,7 +144,7 @@ const DATA = {
   "DE": {
    "zh": "德国",
    "en": "Germany",
-   "elo": 1907,
+   "elo": 1908,
    "flag": "🇩🇪"
   },
   "JP": {
