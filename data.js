@@ -1,6 +1,6 @@
 const DATA = {
- "dataDate": "2026-07-11 14:32 UTC",
- "lastChecked": "2026-07-11 14:32 UTC",
+ "dataDate": "2026-07-11 18:05 UTC",
+ "lastChecked": "2026-07-11 18:05 UTC",
  "nSims": 100000,
  "teams": {
   "AR": {
@@ -72,7 +72,7 @@ const DATA = {
   "HR": {
    "zh": "克罗地亚",
    "en": "Croatia",
-   "elo": 1881,
+   "elo": 1882,
    "flag": "🇭🇷"
   },
   "MA": {
@@ -192,7 +192,7 @@ const DATA = {
   "ZA": {
    "zh": "南非",
    "en": "South Africa",
-   "elo": 1560,
+   "elo": 1559,
    "flag": "🇿🇦"
   }
  },
