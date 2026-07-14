@@ -1,6 +1,6 @@
 const DATA = {
- "dataDate": "2026-07-13 15:50 UTC",
- "lastChecked": "2026-07-14 10:55 UTC",
+ "dataDate": "2026-07-14 15:02 UTC",
+ "lastChecked": "2026-07-14 15:02 UTC",
  "nSims": 100000,
  "teams": {
   "AR": {
@@ -96,7 +96,7 @@ const DATA = {
   "AU": {
    "zh": "澳大利亚",
    "en": "Australia",
-   "elo": 1795,
+   "elo": 1794,
    "flag": "🇦🇺"
   },
   "US": {
@@ -144,7 +144,7 @@ const DATA = {
   "DE": {
    "zh": "德国",
    "en": "Germany",
-   "elo": 1908,
+   "elo": 1907,
    "flag": "🇩🇪"
   },
   "JP": {
@@ -192,7 +192,7 @@ const DATA = {
   "ZA": {
    "zh": "南非",
    "en": "South Africa",
-   "elo": 1559,
+   "elo": 1560,
    "flag": "🇿🇦"
   }
  },
