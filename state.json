@@ -1,5 +1,5 @@
 {
- "dataDate": "2026-07-16 04:23 UTC",
+ "dataDate": "2026-07-17 07:28 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
   "AR": 2200,
@@ -33,7 +33,7 @@
   "CI": 1727,
   "CD": 1704,
   "BA": 1605,
-  "ZA": 1560
+  "ZA": 1559
  },
  "results": {
   "R32_A": {
@@ -1163,5 +1163,5 @@
    "eloB": 2156
   }
  },
- "lastChecked": "2026-07-17 04:22 UTC"
+ "lastChecked": "2026-07-17 07:28 UTC"
 }
