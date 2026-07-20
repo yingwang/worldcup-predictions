@@ -1,9 +1,9 @@
 {
- "dataDate": "2026-07-19 22:07 UTC",
+ "dataDate": "2026-07-20 04:50 UTC",
  "eloSource": "eloratings.net World.tsv",
  "elo": {
-  "AR": 2200,
-  "ES": 2232,
+  "AR": 2173,
+  "ES": 2259,
   "FR": 2070,
   "EN": 2125,
   "BR": 1993,
@@ -1265,5 +1265,5 @@
    "eloB": 2232
   }
  },
- "lastChecked": "2026-07-19 22:07 UTC"
+ "lastChecked": "2026-07-20 04:50 UTC"
 }
