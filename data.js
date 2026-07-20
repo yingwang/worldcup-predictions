@@ -1,6 +1,6 @@
 const DATA = {
  "dataDate": "2026-07-20 04:50 UTC",
- "lastChecked": "2026-07-20 11:56 UTC",
+ "lastChecked": "2026-07-20 15:19 UTC",
  "nSims": 100000,
  "teams": {
   "AR": {
