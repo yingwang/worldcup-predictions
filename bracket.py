@@ -84,9 +84,12 @@ QF = [
     {"id": "QF4", "a": ("W", "R16_7"), "b": ("W", "R16_8"), "venue": "US", "date": "07-11", "city": "Kansas City"},
 ]
 
+# 官方赛制的半决赛是跨半区交叉:QF1 胜者对 QF3 胜者、QF2 胜者对 QF4 胜者
+# (而不是相邻的 QF1×QF2 / QF3×QF4)。2026-07-14 阿灵顿:法国 0-2 西班牙,
+# 2026-07-15 亚特兰大:英格兰 1-2 阿根廷,与此交叉一致。
 SF = [
-    {"id": "SF1", "a": ("W", "QF1"), "b": ("W", "QF2"), "venue": "US", "date": "07-14", "city": "Arlington"},
-    {"id": "SF2", "a": ("W", "QF3"), "b": ("W", "QF4"), "venue": "US", "date": "07-15", "city": "Atlanta"},
+    {"id": "SF1", "a": ("W", "QF1"), "b": ("W", "QF3"), "venue": "US", "date": "07-14", "city": "Arlington"},
+    {"id": "SF2", "a": ("W", "QF2"), "b": ("W", "QF4"), "venue": "US", "date": "07-15", "city": "Atlanta"},
 ]
 
 TP = {"id": "TP", "a": ("L", "SF1"), "b": ("L", "SF2"), "venue": "US", "date": "07-18", "city": "Miami"}
