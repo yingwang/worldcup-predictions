@@ -286,6 +286,27 @@ def map_results_to_bracket(by_pair, old_results):
     return results
 
 
+def unmatched_pairs(by_pair, results):
+    """解析成功、却在对阵树上找不到位置的对阵。
+
+    正常情况下应为空:每场解析出的完赛都能挂到某个比赛编号上。非空几乎总是
+    意味着 bracket.py 写死的对阵关系与实际赛制不符(例如半决赛交叉写错),
+    此时新赛果会被静默丢弃、甚至被错误地挂到相邻场次上,必须响亮地暴露出来。
+    """
+    matched = set()
+    winners = {mid: r["winner"] for mid, r in results.items()}
+    losers = {}
+    for m in ALL_MATCHES:
+        mid = m["id"]
+        a = resolve_team(m["a"], winners, losers)
+        b = resolve_team(m["b"], winners, losers)
+        if a is None or b is None or mid not in results:
+            continue
+        matched.add(frozenset((a, b)))
+        losers[mid] = b if results[mid]["winner"] == a else a
+    return set(by_pair) - matched
+
+
 def parse_elo(old_elo):
     tsv = fetch(ELO_TSV)
     new_elo = dict(old_elo)
@@ -326,6 +347,12 @@ def main():
         results_checked = True
         print(f"results: parsed {len(by_pair)} finished matches, "
               f"mapped {len(new_results)} into bracket")
+        orphans = unmatched_pairs(by_pair, new_results)
+        if orphans:
+            pairs = ", ".join("-".join(sorted(p)) for p in sorted(orphans, key=sorted))
+            print(f"results: WARNING {len(orphans)} finished matches do not fit "
+                  f"the bracket: {pairs};很可能 bracket.py 的对阵关系与实际赛制不符",
+                  file=sys.stderr)
     except ResultsParseError as e:
         print(f"results: PARSER REGRESSION ({e});保留旧状态并以非零码退出",
               file=sys.stderr)

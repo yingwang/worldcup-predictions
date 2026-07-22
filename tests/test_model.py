@@ -154,6 +154,47 @@ def test_map_results_propagates_corrected_winner_to_later_round():
     assert results["R16_1"]["winner"] == "CA"
 
 
+def _seed_results_through_qf():
+    """构造一套打满 R32/R16/QF 的结果(每场都由 a 方获胜),返回 (results, QF 胜者)。"""
+    results = {}
+    winners = {}
+    for m in bracket.R32 + bracket.R16 + bracket.QF:
+        a = bracket.resolve_team(m["a"], winners, {})
+        results[m["id"]] = {"score": [1, 0], "note": "", "winner": a}
+        winners[m["id"]] = a
+    return results, [winners[mid] for mid in ("QF1", "QF2", "QF3", "QF4")]
+
+
+def test_semifinal_crossing_maps_sf_tp_and_final():
+    # 2026 实际赛制:SF1 = QF1 胜者 × QF3 胜者,SF2 = QF2 胜者 × QF4 胜者。
+    # 回归保护:此前 bracket 误写成 QF1×QF2 / QF3×QF4,导致真实半决赛
+    # 挂不上对阵树、季军赛和决赛又被错挂到半决赛槽位上。
+    results, (w1, w2, w3, w4) = _seed_results_through_qf()
+    by_pair = {
+        frozenset((w1, w3)): {"a": w1, "b": w3, "score": [0, 2], "note": "", "winner": w3},
+        frozenset((w2, w4)): {"a": w2, "b": w4, "score": [1, 2], "note": "", "winner": w4},
+        frozenset((w1, w2)): {"a": w1, "b": w2, "score": [4, 6], "note": "", "winner": w2},  # 季军赛
+        frozenset((w3, w4)): {"a": w3, "b": w4, "score": [1, 0], "note": "加时", "winner": w3},  # 决赛
+    }
+    mapped = update.map_results_to_bracket(by_pair, results)
+    assert mapped["SF1"]["winner"] == w3
+    assert mapped["SF2"]["winner"] == w4
+    assert mapped["TP"]["winner"] == w2
+    assert mapped["F"]["winner"] == w3
+    assert update.unmatched_pairs(by_pair, mapped) == set()
+
+
+def test_unmatched_pairs_flags_results_that_do_not_fit_bracket():
+    results, (w1, w2, w3, w4) = _seed_results_through_qf()
+    # 一场真实半决赛 + 一对按错误交叉(QF1×QF2)虚构的对阵
+    by_pair = {
+        frozenset((w1, w3)): {"a": w1, "b": w3, "score": [0, 2], "note": "", "winner": w3},
+        frozenset((w1, w2)): {"a": w1, "b": w2, "score": [2, 1], "note": "", "winner": w1},
+    }
+    mapped = update.map_results_to_bracket(by_pair, results)
+    assert update.unmatched_pairs(by_pair, mapped) == {frozenset((w1, w2))}
+
+
 # ---------------------------------------- 下界断言(防静默冻结)
 
 def test_assert_result_count_guard():
